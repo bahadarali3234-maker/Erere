@@ -1,0 +1,8 @@
+{
+  "name": "Erere",
+  "description": "Build apps and websites faster with AI-powered tooling",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

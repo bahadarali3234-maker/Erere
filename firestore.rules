@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // 1. Global safety net catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Shared secure primitives
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // 2. Project entity validation blueprint
+    function isValidProject(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 200
+        && data.prompt is string && data.prompt.size() <= 2000
+        && data.createdAt is string && data.createdAt.size() <= 100
+        && (data.status == 'Ready' || data.status == 'Compiling' || data.status == 'Maintained')
+        && (data.isTemplate == true || data.isTemplate == false)
+        && (data.isTemplate == true || data.ownerId == request.auth.uid)
+        && (data.keys().hasAll(['id', 'title', 'prompt', 'createdAt', 'status']) && data.keys().size() <= 12);
+    }
+
+    // 3. Showcase entity validation blueprint
+    function isValidShowcase(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.title is string && data.title.size() <= 200
+        && data.category is string && data.category.size() <= 100
+        && data.author is string && data.author.size() <= 100
+        && data.likes is number
+        && data.views is string
+        && (data.keys().hasAll(['id', 'title', 'category', 'author', 'likes']) && data.keys().size() <= 10);
+    }
+
+    // Project matches
+    match /projects/{projectId} {
+      allow get: if isValidId(projectId) && (
+        existing().isTemplate == true || (isSignedIn() && existing().ownerId == request.auth.uid)
+      );
+
+      // List query security enforcer
+      allow list: if existing().isTemplate == true || (isSignedIn() && existing().ownerId == request.auth.uid);
+
+      // Create constraint preventing identity spoofing and shadow records
+      allow create: if isValidId(projectId) 
+        && isSignedIn() 
+        && isValidProject(incoming())
+        && incoming().id == projectId
+        && (
+          (incoming().isTemplate == false && incoming().ownerId == request.auth.uid) ||
+          (incoming().isTemplate == true)
+        );
+
+      // Tiered update logic prevents template sabotage
+      allow update: if isValidId(projectId)
+        && isSignedIn()
+        && isValidProject(incoming())
+        && existing().isTemplate == false
+        && incoming().ownerId == request.auth.uid
+        && existing().ownerId == request.auth.uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'prompt', 'viewsCount', 'status', 'techStack']);
+
+      // Only signed in owners can delete their own workspace custom creations
+      allow delete: if isValidId(projectId)
+        && isSignedIn()
+        && existing().isTemplate == false
+        && existing().ownerId == request.auth.uid;
+    }
+
+    // Showcase matches
+    match /showcase/{showcaseId} {
+      allow read: if true;
+      
+      allow create: if isValidId(showcaseId)
+        && isSignedIn()
+        && isValidShowcase(incoming())
+        && incoming().id == showcaseId;
+
+      allow update: if isValidId(showcaseId)
+        && isSignedIn()
+        // Allow likes or views incrementation update actions only
+        && incoming().diff(existing()).affectedKeys().hasOnly(['likes', 'views']);
+
+      allow delete: if false; // System showcase lists are protected against deletion
+    }
+  }
+}

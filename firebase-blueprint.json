@@ -1,0 +1,111 @@
+{
+  "entities": {
+    "project": {
+      "title": "Project Blueprint",
+      "description": "A customized interactive user-created workspace design or standard default template",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the project"
+        },
+        "title": {
+          "type": "string",
+          "description": "Name of the workspace model"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "User design description prompt used to compile components"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Human friendly formatted creation date or timestamp string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Ready", "Compiling", "Maintained"],
+          "description": "Active compile state status of the project engine"
+        },
+        "techStack": {
+          "type": "array",
+          "description": "Technical dependency tags associated with the layout"
+        },
+        "viewsCount": {
+          "type": "number",
+          "description": "Number of preview load occurrences"
+        },
+        "isTemplate": {
+          "type": "boolean",
+          "description": "True if this represents a high fidelity global template showcased in side panel"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Identifier tracking authorized creator owner credentials"
+        },
+        "avatarBg": {
+          "type": "string",
+          "description": "Visual decoration CSS styles applied on sidebar avatars"
+        },
+        "iconCode": {
+          "type": "string",
+          "description": "Shorthand abbreviations visible in showcase avatars"
+        }
+      },
+      "required": ["id", "title", "prompt", "createdAt", "status"]
+    },
+    "showcase": {
+      "title": "Showcase Card",
+      "description": "Featured interactive template card visible on the main page",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique system ID of the featured element"
+        },
+        "title": {
+          "type": "string",
+          "description": "Name of the showcased card design"
+        },
+        "category": {
+          "type": "string",
+          "description": "Functional domain categorization slug"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author or developer username"
+        },
+        "likes": {
+          "type": "number",
+          "description": "Number of stars or user likes accumulated"
+        },
+        "views": {
+          "type": "string",
+          "description": "Formatted traffic string visible to users"
+        },
+        "glowColor": {
+          "type": "string",
+          "description": "RGB or HEX color applied as hover radial decoration"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed functional summary of the app blueprint"
+        },
+        "techBadge": {
+          "type": "array",
+          "description": "List of core platform dependencies"
+        }
+      },
+      "required": ["id", "title", "category", "author", "likes"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "project",
+      "description": "Collection persistent storage keeping real user blueprints and platform global showcase cards"
+    },
+    "/showcase/{showcaseId}": {
+      "schema": "showcase",
+      "description": "Featured global cards database displayed dynamically on landing deck layout"
+    }
+  }
+}

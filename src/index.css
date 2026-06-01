@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  --font-serif-inst: "Instrument Serif", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Custom background mask and glow overlay to perfectly mimic the reference design */
+.ambient-glow {
+  background: radial-gradient(circle at 50% 10%, rgba(16, 185, 129, 0.15) 0%, rgba(4, 120, 87, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+}
+
+.subtle-blur {
+  backdrop-filter: blur(12px);
+}
+
