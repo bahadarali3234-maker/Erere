@@ -29,7 +29,15 @@ import {
   Cpu,
   Zap,
   Play,
-  ChevronRight
+  ChevronRight,
+  Moon,
+  CloudSun,
+  Sunset,
+  Clock,
+  Sparkles,
+  Paperclip,
+  Brain,
+  Mic
 } from 'lucide-react';
 import PlusMenu from './components/PlusMenu';
 import VoiceSTT from './components/VoiceSTT';
@@ -37,7 +45,10 @@ import LoginModal from './components/LoginModal';
 import ShowcaseSection from './components/ShowcaseSection';
 import MyProjectsDrawer, { UserProject } from './components/MyProjectsDrawer';
 // @ts-expect-error - image asset import declaration suppression for Vite
-import bgImage from './assets/images/cave_moon_background_1780298528427.png';
+import bgImage from './assets/images/sand_cave_background_1780675270963.png';
+// @ts-expect-error - image asset import declaration suppression for Vite
+import nightBgImage from './assets/images/cave_moon_background_1780298528427.png';
+import { ThemeMode, themes, getThemeForHour } from './theme';
 import { auth } from './lib/firebase';
 import { signInAnonymously, onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
@@ -56,10 +67,12 @@ export default function App() {
   // Custom interactive system parameters
   const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
   const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [isDeepThinking, setIsDeepThinking] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPromptFocused, setIsPromptFocused] = useState(false);
+  const [isAtmosOpen, setIsAtmosOpen] = useState(false);
 
   // Touch swipe gesture states
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -68,6 +81,32 @@ export default function App() {
 
   // Local storage persisted portfolio state
   const [projects, setProjects] = useState<UserProject[]>([]);
+
+  // Dynamic Themes variables
+  const [themeMode, setThemeMode] = useState<ThemeMode>('afternoon');
+  const [isAutoTheme, setIsAutoTheme] = useState(true);
+
+  // Auto-detect theme based on time
+  useEffect(() => {
+    if (isAutoTheme) {
+      const currentHour = new Date().getHours();
+      setThemeMode(getThemeForHour(currentHour));
+    }
+  }, [isAutoTheme]);
+
+  // Periodic clock check to ensure real-time accuracy if they stay on page
+  useEffect(() => {
+    const clockInterval = setInterval(() => {
+      if (isAutoTheme) {
+        const currentHour = new Date().getHours();
+        const detected = getThemeForHour(currentHour);
+        setThemeMode((prev) => (prev !== detected ? detected : prev));
+      }
+    }, 15000); // Check every 15 seconds
+    return () => clearInterval(clockInterval);
+  }, [isAutoTheme]);
+
+  const activeTheme = themes[themeMode];
 
   // Synchronize local state with Firebase Firestore
   useEffect(() => {
@@ -135,19 +174,54 @@ export default function App() {
     e.preventDefault();
     if (!prompt.trim()) return;
 
-    setIsGenerating(true);
-    setGenerationStep(0);
+    const rawTitle = prompt.length > 30 ? prompt.substring(0, 27) + "..." : prompt;
+    const stackOptions: string[] = ['React v19', 'Tailwind v4'];
+    if (isDeepThinking) {
+      stackOptions.push('Reasoning Core');
+    }
+    const lp = prompt.toLowerCase();
+    if (lp.includes('dash') || lp.includes('chart') || lp.includes('analyt')) {
+      stackOptions.push('Recharts');
+    }
+    if (lp.includes('e-com') || lp.includes('store') || lp.includes('pay') || lp.includes('stripe')) {
+      stackOptions.push('Stripe Gateway');
+    }
+    if (lp.includes('sql') || lp.includes('database') || lp.includes('sqlite')) {
+      stackOptions.push('SQLite DB');
+    }
+    if (lp.includes('gemini') || lp.includes('ai') || lp.includes('agent')) {
+      stackOptions.push('Gemini AI SDK');
+    }
+    if (!isDeepThinking && stackOptions.length === 2) {
+      stackOptions.push('Web Auth');
+    }
 
-    // Simulate AI Generation progression steps! High-fidelity user experience
-    const interval = setInterval(() => {
-      setGenerationStep((prev) => {
-        if (prev >= 3) {
-          clearInterval(interval);
-          return 3;
-        }
-        return prev + 1;
+    const createdProj: UserProject = {
+      id: "user-app-" + Date.now(),
+      title: rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1),
+      prompt: prompt,
+      createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: 'Ready',
+      techStack: stackOptions,
+      viewsCount: Math.floor(Math.random() * 8) + 1
+    };
+
+    const currentList = [createdProj, ...projects];
+    saveProjects(currentList);
+
+    // Sync custom blueprint structure to secure Cloud Firestore Database
+    if (auth.currentUser) {
+      createUserProjectInDb(createdProj, auth.currentUser.uid).catch(err => {
+        console.error("Firestore persistence failed:", err);
       });
-    }, 1200);
+    }
+
+    setPrompt('');
+
+    // Auto slide-in portfolio drawer from the left panel so they can immediately see their creation inside their personal drawer!
+    setTimeout(() => {
+      setIsDrawerOpen(true);
+    }, 400);
   };
 
   const currentStepMessage = () => {
@@ -189,7 +263,7 @@ export default function App() {
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      className="min-h-screen bg-[#070e0a] text-zinc-100 font-sans selection:bg-emerald-500/30 selection:text-emerald-300"
+      className={`min-h-screen ${activeTheme.bg} transition-colors duration-1000 ${activeTheme.textMain} font-sans selection:bg-emerald-200 selection:text-emerald-900`}
     >
       
       {/* Dynamic Generation Overlay */}
@@ -322,29 +396,46 @@ export default function App() {
       {/* Main Container */}
       <div className="relative w-full overflow-hidden flex flex-col">
         
-        {/* Background Artwork - Perfect replica of the moon-in-cave prompt with slow-motion breath dynamics */}
+        {/* Background Artwork - Elegant sand and mint backdrop with slow-motion breath dynamics */}
         <div className="absolute top-0 left-0 w-full h-[95vh] md:h-[110vh] overflow-hidden pointer-events-none z-0">
-          <div className="absolute inset-0 bg-gradient-to-t from-[#070e0a] via-transparent to-black/45 z-10" />
-          <div className="absolute inset-x-0 top-0 h-[40%] bg-gradient-to-b from-black/60 to-transparent z-10" />
-          <motion.img 
-            src={bgImage} 
-            alt="Dreamy cave overlooking starry green moonlit sky" 
-            className="w-full h-full object-cover origin-top opacity-85"
-            referrerPolicy="no-referrer"
-            animate={{
-              scale: [1.01, 1.05, 1.01],
-              y: [0, -6, 0]
-            }}
-            transition={{
-              duration: 35,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
+          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-transparent z-10" />
+          <div className={`absolute inset-0 bg-gradient-to-b ${activeTheme.bgOverlay} z-10 transition-all duration-1000`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-transparent z-10" />
+          
+          <AnimatePresence mode="popLayout">
+            {themeMode === 'night' ? (
+              <motion.img 
+                key="night-bg"
+                src={nightBgImage} 
+                alt="Dreamy quiet moon cave overlooking misty night-sky stars coast" 
+                className="w-full h-full object-cover origin-top opacity-55 absolute inset-0"
+                referrerPolicy="no-referrer"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.55 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.0 }}
+              />
+            ) : (
+              <motion.img 
+                key="day-bg"
+                src={bgImage} 
+                alt="Dreamy soft sand cave overlooking misty sunlit coast" 
+                className="w-full h-full object-cover origin-top opacity-90 absolute inset-0"
+                referrerPolicy="no-referrer"
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: themeMode === 'sunset' ? 0.75 : 0.9,
+                  filter: themeMode === 'sunset' ? 'sepia(0.2) saturate(1.7) hue-rotate(-12deg)' : 'none'
+                }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.0 }}
+              />
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Ambient Glow Overlay */}
-        <div className="absolute top-0 left-0 w-full h-[100vh] ambient-glow z-1 pointer-events-none" />
+        <div className={`absolute top-0 left-0 w-full h-[100vh] bg-gradient-to-t from-transparent via-emerald-50/10 to-transparent z-1 pointer-events-none`} />
 
         {/* --- HEADER --- */}
         <header className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between z-30">
@@ -352,18 +443,18 @@ export default function App() {
           {/* Logo */}
           <div className="flex items-center space-x-2 cursor-pointer group">
             <div className="relative w-7 h-7 flex items-center justify-center">
-              <span className="absolute inset-0 bg-emerald-500/20 rounded-full blur-sm group-hover:bg-emerald-500/30 transition-all duration-300" />
-              <div className="relative w-5 h-5 border-2 border-emerald-400/80 rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300">
-                <div className="w-1.5 h-1.5 bg-emerald-300 rounded-full" />
-                <div className="absolute w-[3px] h-[3px] bg-emerald-400 rounded-full -top-1" />
-                <div className="absolute w-[3px] h-[3px] bg-emerald-400 rounded-full -bottom-1" />
+              <span className={`absolute inset-0 ${themeMode === 'night' ? 'bg-emerald-500/20' : 'bg-emerald-500/10'} rounded-full blur-sm group-hover:bg-emerald-500/20 transition-all duration-300`} />
+              <div className={`relative w-5 h-5 border-2 ${themeMode === 'night' ? 'border-emerald-400' : 'border-emerald-700/80'} rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform duration-300`}>
+                <div className={`w-1.5 h-1.5 ${themeMode === 'night' ? 'bg-emerald-400' : 'bg-emerald-700'} rounded-full`} />
+                <div className={`absolute w-[3px] h-[3px] ${themeMode === 'night' ? 'bg-emerald-350' : 'bg-emerald-600'} rounded-full -top-1`} />
+                <div className={`absolute w-[3px] h-[3px] ${themeMode === 'night' ? 'bg-emerald-350' : 'bg-emerald-600'} rounded-full -bottom-1`} />
               </div>
             </div>
-            <span className="font-display font-semibold text-lg text-white tracking-tight">Erere</span>
+            <span className={`font-display font-semibold text-lg tracking-tight transition-colors duration-1000 ${themeMode === 'night' ? 'text-[#e9f2ec]' : 'text-[#1e3d30]'}`}>Erere</span>
           </div>
 
           {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 text-zinc-300 font-sans text-[13.5px] font-medium">
+          <nav className={`hidden md:flex items-center space-x-1 lg:space-x-2 text-[13.5px] font-medium transition-colors duration-1000 ${themeMode === 'night' ? 'text-zinc-300' : 'text-[#2c5341]'}`}>
             {[
               { label: 'Products', hasMenu: true },
               { label: 'For work', hasMenu: true },
@@ -377,9 +468,9 @@ export default function App() {
                 onMouseEnter={() => setHoveredNav(item.label)}
                 onMouseLeave={() => setHoveredNav(null)}
               >
-                <button className="flex items-center space-x-1 px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition duration-150">
+                <button className={`flex items-center space-x-1 px-3 py-1.5 rounded-lg transition duration-150 ${themeMode === 'night' ? 'hover:text-white hover:bg-zinc-850/80' : 'hover:text-emerald-950 hover:bg-[#e1efe8]/60'}`}>
                   <span>{item.label}</span>
-                  {item.hasMenu && <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />}
+                  {item.hasMenu && <ChevronDown className={`w-3.5 h-3.5 opacity-80 ${themeMode === 'night' ? 'text-zinc-400' : 'text-[#2c5341]'}`} />}
                 </button>
                 
                 {/* Visual dropdown hint */}
@@ -387,16 +478,18 @@ export default function App() {
                   <motion.div 
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 bg-zinc-950/95 border border-zinc-800 rounded-lg p-2 shadow-2xl backdrop-blur-md"
+                    className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 w-48 rounded-xl p-2 shadow-xl backdrop-blur-md border ${
+                      themeMode === 'night' ? 'bg-[#0f1411]/95 border-[#1b2b21] text-zinc-100' : 'bg-white/95 border-emerald-100 text-[#1e3d30]'
+                    }`}
                   >
-                    <div className="px-3 py-1.5 text-xs text-zinc-500 font-mono">Platform Options</div>
-                    <button className="w-full text-left px-3 py-2 rounded-md hover:bg-white/5 text-xs hover:text-emerald-300 transition-colors">
+                    <div className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider ${themeMode === 'night' ? 'text-emerald-400' : 'text-emerald-800'}`}>Platform Options</div>
+                    <button className={`w-full text-left px-3 py-2 rounded-md text-xs transition-colors ${themeMode === 'night' ? 'hover:bg-[#152a1e] text-zinc-300' : 'hover:bg-emerald-50 text-zinc-700 hover:text-[#1e4634]'}`}>
                       AI Code Generation
                     </button>
-                    <button className="w-full text-left px-3 py-2 rounded-md hover:bg-white/5 text-xs hover:text-emerald-300 transition-colors">
+                    <button className={`w-full text-left px-3 py-2 rounded-md text-xs transition-colors ${themeMode === 'night' ? 'hover:bg-[#152a1e] text-zinc-300' : 'hover:bg-emerald-50 text-zinc-700 hover:text-[#1e4634]'}`}>
                       Interactive Previews
                     </button>
-                    <button className="w-full text-left px-3 py-2 rounded-md hover:bg-white/5 text-xs hover:text-emerald-300 transition-colors">
+                    <button className={`w-full text-left px-3 py-2 rounded-md text-xs transition-colors ${themeMode === 'night' ? 'hover:bg-[#152a1e] text-zinc-300' : 'hover:bg-emerald-50 text-zinc-700 hover:text-[#1e4634]'}`}>
                       Instant Deployment
                     </button>
                   </motion.div>
@@ -406,22 +499,47 @@ export default function App() {
           </nav>
 
           {/* Top Actions */}
-          <div className="flex items-center space-x-4">
-            <a href="#contact" className="text-zinc-300 hover:text-white font-sans text-[13.5px] font-medium transition hidden sm:inline-block">
+          <div className="flex items-center space-x-3.5 sm:space-x-4">
+            
+            {/* AUTOMATIC LIVE THEME STATUS INDICATOR */}
+            <div className="relative">
+              <div 
+                className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full border text-[11.5px] font-semibold select-none transition-all duration-300 ${
+                  themeMode === 'night' 
+                    ? 'bg-emerald-950/20 border-emerald-800/40 text-emerald-400 shadow-lg shadow-emerald-900/10' 
+                    : themeMode === 'sunset'
+                    ? 'bg-[#feeadd]/70 border-[#f3cfb6] text-[#ca5a27]'
+                    : 'bg-[#def5ea]/80 border-[#b2e5cc]/55 text-emerald-800'
+                }`}
+                title="Dynamic Atmosphere synced in real-time"
+              >
+                {themeMode === 'morning' ? <CloudSun className="w-3.5 h-3.5 text-amber-500 animate-pulse" /> :
+                 themeMode === 'afternoon' ? <Sun className="w-3.5 h-3.5 text-emerald-600 animate-spin-slow" /> :
+                 themeMode === 'sunset' ? <Sunset className="w-3.5 h-3.5 text-orange-500 animate-pulse" /> :
+                 <Moon className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />}
+                <span className="hidden sm:inline-block">
+                  Live Time-Sync 🔄
+                </span>
+              </div>
+            </div>
+
+            <a href="#contact" className={`hover:text-emerald-950 font-sans text-[13.5px] font-medium transition hidden sm:inline-block ${themeMode === 'night' ? 'text-zinc-300 hover:text-white' : 'text-[#2c5341]'}`}>
               Contact sales
             </a>
             {userEmail ? (
-              <div className="flex items-center space-x-3 bg-zinc-950/70 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
-                <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-emerald-400 to-teal-400 flex items-center justify-center text-[10px] font-bold text-zinc-950 uppercase">
+              <div className={`flex items-center space-x-3 px-4 py-1.5 rounded-full border shadow-md shadow-emerald-500/5 ${
+                themeMode === 'night' ? 'bg-[#0f1411] border-[#1b2b21]' : 'bg-white/95 border-emerald-500/20'
+              }`}>
+                <div className="w-5.5 h-5.5 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-[10px] font-bold text-white uppercase">
                   {userEmail[0]}
                 </div>
-                <span className="text-xs text-emerald-300 font-medium max-w-[110px] truncate">
+                <span className={`text-xs font-medium max-w-[110px] truncate ${themeMode === 'night' ? 'text-[#85988b]' : 'text-[#1e4634]'}`}>
                   {userEmail.split('@')[0]}
                 </span>
-                <div className="h-3 w-[1px] bg-zinc-800" />
+                <div className="h-3 w-[1px] bg-zinc-200" />
                 <button 
                   onClick={() => setUserEmail(null)}
-                  className="text-[10px] text-zinc-500 hover:text-white transition font-mono uppercase tracking-wider"
+                  className="text-[10px] text-zinc-400 hover:text-emerald-950 transition font-mono uppercase tracking-wider"
                 >
                   Logout
                 </button>
@@ -430,13 +548,17 @@ export default function App() {
               <>
                 <button 
                   onClick={() => setIsLoginOpen(true)}
-                  className="text-[#a1a1aa] hover:text-white font-sans text-[13.5px] font-medium transition cursor-pointer"
+                  className={`font-sans text-[13.5px] font-medium transition cursor-pointer ${themeMode === 'night' ? 'text-zinc-300 hover:text-white' : 'text-[#2c5341] hover:text-[#12381e]'}`}
                 >
                   Login
                 </button>
                 <button 
                   onClick={() => setIsLoginOpen(true)}
-                  className="px-4 py-1.5 rounded-full border border-white/20 hover:border-white/40 text-white font-sans text-[13.5px] font-medium transition-all bg-white/5 hover:bg-white/10 active:scale-95 cursor-pointer"
+                  className={`px-4 py-1.5 rounded-full border text-sans text-[13.5px] font-medium transition-all active:scale-95 cursor-pointer ${
+                    themeMode === 'night' 
+                      ? 'bg-emerald-500 text-black border-transparent hover:bg-emerald-455' 
+                      : 'border-emerald-950/15 hover:border-emerald-950/35 text-emerald-900 bg-[#def5ea]/40 hover:bg-[#def5ea]/80'
+                  }`}
                 >
                   Create account
                 </button>
@@ -449,7 +571,7 @@ export default function App() {
         <main className="relative z-10 w-full max-w-4xl mx-auto px-4 pt-16 sm:pt-24 pb-8 flex flex-col items-center justify-center text-center">
           
           {/* Main Title Heading - Premium organic stagger blur reveals */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-sans font-semibold tracking-tight leading-[1.2] text-white select-none max-w-3xl">
+          <h1 className={`text-4xl sm:text-5xl md:text-6xl font-sans font-semibold tracking-tight leading-[1.2] ${activeTheme.textMain} select-none max-w-3xl transition-colors duration-1000`}>
             <motion.span 
               initial={{ opacity: 0, y: 22, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
@@ -462,9 +584,9 @@ export default function App() {
               initial={{ opacity: 0, y: 22, filter: 'blur(8px)' }}
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               transition={{ duration: 0.9, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
-              className="block text-zinc-200 mt-1 font-serif-inst"
+              className={`block ${activeTheme.textMain} mt-1 font-serif-inst`}
             >
-              faster with <span className="italic font-light text-emerald-400/90 relative inline-block px-1 select-text transition-colors duration-300 hover:text-emerald-300">AI-powered tooling</span>
+              faster with <span className={`italic font-light ${themeMode === 'night' ? 'text-emerald-400 hover:text-emerald-350' : 'text-[#247c51] hover:text-[#1b613e]'} relative inline-block px-1 select-text transition-colors duration-300`}>AI-powered tooling</span>
             </motion.span>
           </h1>
 
@@ -473,7 +595,7 @@ export default function App() {
             initial={{ opacity: 0, y: 15, filter: 'blur(10px)' }}
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             transition={{ duration: 1.1, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-6 text-zinc-400 font-sans font-light text-base sm:text-lg max-w-xl"
+            className={`mt-6 ${activeTheme.textMuted} font-sans font-light text-base sm:text-lg max-w-xl transition-colors duration-1000`}
           >
             Turn ideas into functional apps — in minutes — no coding experience needed
           </motion.p>
@@ -488,7 +610,7 @@ export default function App() {
                 }}
               />
             ) : (
-              /* Prompt Container Input Bar with premium focusing glow states */
+              /* Prompt Container Input Bar with premium focusing glow states resembling reference layout */
               <motion.form 
                 onSubmit={handleGenerate}
                 initial={{ opacity: 0, y: 30, filter: 'blur(12px)' }}
@@ -497,13 +619,13 @@ export default function App() {
                   y: 0, 
                   filter: 'blur(0px)',
                   boxShadow: isPromptFocused 
-                    ? '0 0 35px rgba(16, 185, 129, 0.22), 0 15px 35px -5px rgba(0,0,0,0.85)' 
-                    : '0 15px 30px -5px rgba(0,0,0,0.6)'
+                    ? (themeMode === 'night' ? '0 0px 30px rgba(16, 185, 129, 0.12), 0 10px 25px -5px rgba(0,0,0,0.5)' : '0 0px 30px rgba(36, 75, 60, 0.12), 0 10px 25px -5px rgba(0,0,0,0.06)')
+                    : '0 10px 25px -5px rgba(0,0,0,0.04)'
                 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.9, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                className={`w-full max-w-3xl mt-12 mb-10 bg-zinc-950/85 md:bg-zinc-950/70 border p-5 rounded-[26px] sm:rounded-[32px] backdrop-blur-md flex flex-col justify-between relative z-30 transition-colors duration-300 ${
-                  isPromptFocused ? 'border-emerald-500/40' : 'border-white/10'
+                className={`w-full max-w-3xl mt-12 mb-10 ${activeTheme.cardBg} border p-5 rounded-[28px] sm:rounded-[32px] backdrop-blur-xl flex flex-col justify-between relative z-30 transition-all duration-1000 ${
+                  isPromptFocused ? (themeMode === 'night' ? 'border-emerald-500/40' : 'border-[#2d3a34]/30') : activeTheme.cardBorder
                 }`}
               >
                 {/* Input text Row */}
@@ -513,29 +635,31 @@ export default function App() {
                     onChange={(e) => setPrompt(e.target.value)}
                     onFocus={() => setIsPromptFocused(true)}
                     onBlur={() => setIsPromptFocused(false)}
-                    placeholder="Build anything that..."
-                    rows={2}
-                    className="w-full bg-transparent text-white placeholder-zinc-500 font-sans text-base leading-relaxed resize-none focus:outline-none focus:ring-0 pr-10 border-none"
-                    style={{ caretColor: '#10b981' }}
+                    placeholder="Ask a question or make a request..."
+                    rows={3}
+                    className={`w-full bg-transparent ${activeTheme.textMain} placeholder-zinc-500/40 font-sans text-[15px] sm:text-base leading-relaxed resize-none focus:outline-none focus:ring-0 pr-10 border-none`}
+                    style={{ caretColor: themeMode === 'night' ? '#10b981' : '#244b3c' }}
                   />
                   {prompt && (
                     <button 
                       type="button" 
                       onClick={() => setPrompt('')} 
-                      className="absolute right-0 top-1 text-zinc-500 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/5 transition"
+                      className={`absolute right-0 top-1 text-xs px-2.5 py-1 rounded transition-colors ${
+                        themeMode === 'night' ? 'text-emerald-400 hover:bg-emerald-950/40 hover:text-emerald-300' : 'text-[#2c5341] hover:text-emerald-950 hover:bg-black/5'
+                      }`}
                     >
                       Clear
                     </button>
                   )}
                 </div>
 
-                {/* Bottom Actions Row */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-4 border-t border-white/5 mt-4">
+                {/* Bottom Actions Row to match the screenshot spacing and details */}
+                <div className="flex items-center justify-between mt-3 pt-2">
                   
-                  {/* Left actions: + and Chips */}
-                  <div className="flex flex-wrap items-center gap-1.5 overflow-x-auto scroller-hidden">
+                  {/* Left Action Buttons: + Attach, Deep Thinking */}
+                  <div className="flex items-center space-x-2">
                     
-                    {/* Interactive Plus Selector with clean local positioning */}
+                    {/* Attach Selector */}
                     <div className="relative">
                       <button 
                         type="button"
@@ -544,102 +668,90 @@ export default function App() {
                           e.preventDefault();
                           setIsPlusMenuOpen(!isPlusMenuOpen);
                         }}
-                        className={`w-7 h-7 rounded-full border flex items-center justify-center transition active:scale-95 shrink-0 cursor-pointer ${
+                        className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold cursor-pointer transition-all duration-200 active:scale-95 shadow-sm ${
                           isPlusMenuOpen 
-                            ? 'bg-blue-600 border-blue-500 text-white' 
-                            : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 hover:bg-zinc-800/40'
+                            ? 'bg-[#244b3c] border-[#244b3c] text-white shadow-md' 
+                            : themeMode === 'night'
+                            ? 'bg-[#152a1e]/40 border-emerald-950/80 text-emerald-400 hover:bg-[#152a1e]/75 hover:border-emerald-800'
+                            : themeMode === 'sunset'
+                            ? 'bg-[#feeadd]/60 border-[#f3cfb6]/70 text-[#ca5a27] hover:bg-[#fedbcb]/70'
+                            : 'bg-[#e2ebe2]/75 border-[#c8dec8]/70 text-[#2c5341] hover:text-[#1a3528] hover:border-[#244b3c] hover:bg-[#d5e4d5]/90'
                         }`}
                       >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span>Attach</span>
                       </button>
 
                       <AnimatePresence>
                         {isPlusMenuOpen && (
-                          <div className="absolute bottom-9 left-0 z-50">
+                          <div className="absolute bottom-11 left-0 z-50 min-w-[200px]">
                             <PlusMenu 
                               onSelectOption={(textOption) => {
                                 setPrompt((prev) => prev ? `${prev} & ${textOption}` : `Build ${textOption}`);
                               }}
                               onClose={() => setIsPlusMenuOpen(false)}
+                              themeMode={themeMode}
                             />
                           </div>
                         )}
                       </AnimatePresence>
                     </div>
 
-                    {/* Micro Pills / Suggestion Chips with staggered entrance and spring hover states */}
-                    {chips.map((chip, idx) => (
-                      <motion.button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleChipClick(chip.promptText)}
-                        initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
-                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                        transition={{ 
-                          duration: 0.6, 
-                          delay: 0.35 + (idx * 0.08), 
-                          ease: [0.16, 1, 0.3, 1] 
-                        }}
-                        whileHover={{ 
-                          scale: 1.05, 
-                          borderColor: 'rgba(16, 185, 129, 0.45)', 
-                          backgroundColor: 'rgba(24, 24, 27, 0.8)',
-                          boxShadow: '0 0 15px rgba(16, 185, 129, 0.15)'
-                        }}
-                        whileTap={{ scale: 0.95 }}
-                        className="h-7 px-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400 font-sans text-[11.5px] hover:text-white transition-all cursor-pointer shrink-0"
-                      >
-                        {chip.label}
-                      </motion.button>
-                    ))}
+                    {/* Deep Thinking Mode Toggle Button */}
+                    <button 
+                      type="button"
+                      onClick={() => setIsDeepThinking(!isDeepThinking)}
+                      className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full border text-xs font-semibold cursor-pointer transition-all duration-200 active:scale-95 shadow-sm ${
+                        isDeepThinking 
+                          ? themeMode === 'night'
+                            ? 'bg-emerald-950/90 border-emerald-500/55 text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.22)]'
+                            : themeMode === 'sunset'
+                            ? 'bg-orange-100 border-orange-400/50 text-[#ca5a27]'
+                            : 'bg-[#def5ea] border-emerald-600/40 text-[#1e4634]'
+                          : themeMode === 'night'
+                          ? 'bg-[#242c27]/40 border-zinc-800/80 text-zinc-400 hover:text-zinc-200 hover:bg-[#242c27]/70'
+                          : themeMode === 'sunset'
+                          ? 'bg-orange-50/40 border-orange-200/50 text-orange-950/60 hover:text-[#ca5a27] hover:bg-orange-50/80'
+                          : 'bg-[#e2ebe2]/30 border-[#c8dec8]/35 text-[#2c5341]/60 hover:text-emerald-950 hover:bg-[#e2ebe2]/60'
+                      }`}
+                    >
+                      <Brain className={`w-3.5 h-3.5 transition-transform duration-300 ${isDeepThinking ? 'scale-110 animate-pulse text-emerald-500' : 'text-zinc-500'}`} />
+                      <span>Deep Thinking</span>
+                    </button>
 
-                    {/* More / Globe Icon */}
-                    <div className="flex items-center space-x-1.5 pl-1 shrink-0">
-                      <Globe className="w-3.5 h-3.5 text-zinc-500 hover:text-zinc-300 transition cursor-pointer" />
-                      <MoreHorizontal className="w-3.5 h-3.5 text-zinc-500 hover:text-zinc-300 transition cursor-pointer" />
-                    </div>
                   </div>
 
-                  {/* Right actions: Audio lines and green Arrow Button */}
-                  <div className="flex items-center justify-between sm:justify-end space-x-3 gap-2 border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
+                  {/* Right Action Icons: Speech Mic & Submit arrow */}
+                  <div className="flex items-center space-x-2">
                     <button
                       type="button"
                       onClick={() => setIsVoiceActive(true)}
-                      className="relative flex items-center space-x-2 bg-zinc-900 px-3.5 py-1.5 rounded-lg border border-zinc-800/80 cursor-pointer hover:bg-zinc-800 hover:border-emerald-500/40 transition duration-150 active:scale-95 overflow-hidden group"
+                      title="Voice Input Mode"
+                      className={`p-1.5 rounded-full transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer ${
+                        themeMode === 'night'
+                          ? 'text-zinc-400 hover:text-emerald-400 hover:bg-emerald-950/30'
+                          : themeMode === 'sunset'
+                          ? 'text-orange-950/50 hover:text-[#ca5a27] hover:bg-orange-50'
+                          : 'text-[#2c5341]/60 hover:text-emerald-950 hover:bg-black/5'
+                      }`}
                     >
-                      {/* Concentric audio pulse background ring wave */}
-                      <motion.div
-                        className="absolute inset-0 bg-emerald-500/5 rounded-lg pointer-events-none origin-center"
-                        animate={{
-                          scale: [1, 1.15, 1],
-                          opacity: [0.3, 0.7, 0.3]
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
-                      />
-                      
-                      {/* Double active indicator glowing ping dot */}
-                      <div className="relative flex items-center justify-center">
-                        <span className="absolute w-2 h-2 rounded-full bg-emerald-400/40 animate-ping" />
-                        <AudioLines className="w-3.5 h-3.5 text-emerald-400 relative z-10 animate-pulse" />
-                      </div>
-                      
-                      <span className="text-[10px] text-zinc-400 font-mono tracking-wider relative z-10">AUDIO ACTIVE</span>
+                      <Mic className="w-[18px] h-[18px] stroke-[1.8]" />
                     </button>
 
                     <button 
                       type="submit"
                       disabled={!prompt.trim()}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 active:scale-95 ${
                         prompt.trim() 
-                          ? 'bg-emerald-400 text-zinc-950 shadow-[0_0_12px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 hover:bg-emerald-300' 
-                          : 'bg-zinc-800 text-zinc-650 cursor-not-allowed'
+                          ? themeMode === 'night'
+                            ? 'bg-emerald-500 text-black shadow-md shadow-emerald-500/10 hover:bg-emerald-400'
+                            : themeMode === 'sunset'
+                            ? 'bg-[#ca5a27] text-white shadow-md shadow-orange-600/10 hover:bg-[#a34419]'
+                            : 'bg-[#244b3c] text-white hover:bg-[#1a382c]' 
+                          : 'bg-zinc-200/40 text-zinc-400 cursor-not-allowed'
                       }`}
                     >
-                      <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                      <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
                     </button>
                   </div>
 
@@ -648,30 +760,59 @@ export default function App() {
             )}
           </AnimatePresence>
 
+          {/* Brand/Sponsor Logos exactly matching reference image */}
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="w-full max-w-3xl flex flex-wrap items-center justify-center gap-x-10 gap-y-4 text-[#2d3a34] font-medium text-sm mt-8 pb-12 select-none"
+          >
+            <div className="flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
+              <Sparkle className="w-4 h-4 text-[#2c5341] stroke-[2.5]" />
+              <span className="font-sans font-semibold tracking-tight text-[#1e3d30]">Acme Corp</span>
+            </div>
+            <div className="flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
+              <Boxes className="w-4 h-4 text-[#2c5341]" />
+              <span className="font-sans font-semibold tracking-tight text-[#1e3d30]">BuildingBlocks</span>
+            </div>
+            <div className="flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
+              <Cpu className="w-4 h-4 text-[#2c5341]" />
+              <span className="font-sans font-semibold tracking-tight text-[#1e3d30]">AlphaWave</span>
+            </div>
+            <div className="flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
+              <Contrast className="w-4 h-4 text-[#2c5341]" />
+              <span className="font-sans font-semibold tracking-tight text-[#1e3d30]">ContrastAI</span>
+            </div>
+            <div className="flex items-center space-x-1.5 opacity-80 hover:opacity-100 transition-opacity">
+              <Zap className="w-4 h-4 text-[#2c5341]" />
+              <span className="font-sans font-semibold tracking-tight text-[#1e3d30]">Euphoria</span>
+            </div>
+          </motion.div>
+
         </main>
 
         {/* Compact elegant pull trigger button attached to the left edge of the viewport */}
         <div 
           onClick={() => setIsDrawerOpen(true)}
-          className="fixed left-0 top-[40%] -translate-y-1/2 z-40 bg-[#121212]/95 hover:bg-[#181818] border-y border-r border-[#242424] w-7.5 h-14 flex flex-col items-center justify-center rounded-r-xl shadow-[4px_0_15px_rgba(0,0,0,0.6)] cursor-pointer group transition-all duration-200 select-none hover:w-9"
+          className="fixed left-0 top-[40%] -translate-y-1/2 z-40 bg-white/95 hover:bg-[#ebf1ec] border-y border-r border-[#c8dec8]/80 w-7.5 h-14 flex flex-col items-center justify-center rounded-r-xl shadow-[4px_0_15px_rgba(36,75,60,0.06)] cursor-pointer group transition-all duration-200 select-none hover:w-9"
           title="Open Project Base (Swipe Right)"
         >
           {/* Classic minimalist stack bars */}
           <div className="flex flex-col space-y-1 w-3.5 items-center">
-            <span className="h-[1.5px] w-3 bg-zinc-400 group-hover:bg-emerald-400 group-hover:w-3.5 rounded-full transition-all duration-200"></span>
-            <span className="h-[1.5px] w-2.5 bg-zinc-400 group-hover:bg-white group-hover:w-3.5 rounded-full transition-all duration-200"></span>
-            <span className="h-[1.5px] w-3 bg-zinc-400 group-hover:bg-emerald-400 group-hover:w-3.5 rounded-full transition-all duration-200"></span>
+            <span className="h-[1.5px] w-3 bg-[#2c5341] group-hover:bg-[#1b613e] group-hover:w-3.5 rounded-full transition-all duration-200"></span>
+            <span className="h-[1.5px] w-2.5 bg-[#2c5341] group-hover:bg-[#244b3c] group-hover:w-3.5 rounded-full transition-all duration-200"></span>
+            <span className="h-[1.5px] w-3 bg-[#2c5341] group-hover:bg-[#1b613e] group-hover:w-3.5 rounded-full transition-all duration-200"></span>
           </div>
-          <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse mt-2" />
+          <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-pulse mt-2" />
         </div>
 
         {/* --- BLUEPRINTS SHOWCASE SECTION --- */}
-        <ShowcaseSection />
+        <ShowcaseSection themeMode={themeMode} />
 
         {/* --- FOOTER --- */}
-        <footer className="w-full bg-zinc-950/20 py-8 px-6 mt-auto text-center border-t border-zinc-900/60 text-xs text-zinc-500 z-10 relative">
+        <footer className="w-full bg-white/30 py-8 px-6 mt-auto text-center border-t border-[#c8dec8]/30 text-xs text-[#5e7166] z-10 relative">
           <div className="max-w-7xl mx-auto flex items-center justify-center">
-            <div className="w-1.5 h-1.5 bg-emerald-500/45 rounded-full animate-pulse" />
+            <div className="w-1.5 h-1.5 bg-emerald-600/45 rounded-full animate-pulse" />
           </div>
         </footer>
 
@@ -686,6 +827,7 @@ export default function App() {
           isOpen={isDrawerOpen} 
           onClose={() => setIsDrawerOpen(false)} 
           projects={projects}
+          themeMode={themeMode}
           onDeleteProject={async (id) => {
             const list = projects.filter(p => p.id !== id);
             saveProjects(list);

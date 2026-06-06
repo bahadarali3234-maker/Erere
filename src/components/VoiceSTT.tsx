@@ -57,18 +57,18 @@ export default function VoiceSTT({ onCancel, onConfirm }: VoiceSTTProps) {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 15 }}
-      className="w-full max-w-3xl mt-12 mb-10 bg-zinc-950/95 border border-emerald-500/20 p-6 rounded-[28px] shadow-[0_15px_35px_-10px_rgba(4,120,87,0.3)] backdrop-blur-md flex flex-col justify-between"
+      className="w-full max-w-3xl mt-12 mb-10 bg-[#fcfdfc]/95 border border-[#c8dec8] p-6 rounded-[28px] shadow-[0_15px_35px_-10px_rgba(36,75,60,0.08)] backdrop-blur-md flex flex-col justify-between"
     >
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] text-emerald-400 font-mono tracking-widest flex items-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2 animate-ping" />
+        <span className="text-[10px] text-emerald-700 font-mono tracking-widest flex items-center">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 mr-2 animate-ping" />
           LISTENING — SPEAK TO TEXT ACTIVE
         </span>
-        <span className="text-zinc-500 text-[11px] font-mono select-none">Press ✓ to submit voice input</span>
+        <span className="text-[#5e7166] text-[11px] font-mono select-none">Press ✓ to submit voice input</span>
       </div>
 
-      {/* Dynamic Voice Waveform Equalizer exactly mimicking the screenshot style */}
-      <div className="h-16 flex items-center justify-center gap-[3px] py-3 bg-zinc-900/40 rounded-xl border border-white/5 overflow-hidden">
+      {/* Dynamic Voice Waveform Equalizer exactly mimicking the style */}
+      <div className="h-16 flex items-center justify-center gap-[3px] py-3 bg-[#f4f7f4] rounded-xl border border-[#c8dec8]/50 overflow-hidden">
         {bars.map((bar) => {
           // Generate realistic random ranges for visual complexity
           const heightAnim = [
@@ -89,7 +89,7 @@ export default function VoiceSTT({ onCancel, onConfirm }: VoiceSTTProps) {
                 ease: 'easeInOut',
                 delay: Math.random() * 0.4
               }}
-              className="w-[3px] bg-zinc-300 rounded-full"
+              className="w-[3px] bg-[#244b3c] rounded-full"
               style={{ minHeight: '4px' }}
             />
           );
@@ -98,18 +98,18 @@ export default function VoiceSTT({ onCancel, onConfirm }: VoiceSTTProps) {
 
       {/* Real-time transcribed text display */}
       <div className="min-h-[44px] py-3 text-left">
-        <p className="text-sm font-sans text-zinc-300 italic min-h-[20px]">
+        <p className="text-sm font-sans text-[#1e3d30] italic min-h-[20px]">
           {transcript || 'Say something...'}
-          {!isDone && <span className="inline-block w-1.5 h-4 bg-emerald-400 ml-1 animate-pulse" />}
+          {!isDone && <span className="inline-block w-1.5 h-4 bg-emerald-600 ml-1 animate-pulse" />}
         </p>
       </div>
 
-      {/* Interactive Toolbar matching the screenshot bottom state */}
-      <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-2">
+      {/* Interactive Toolbar matching the bottom state */}
+      <div className="flex items-center justify-between border-t border-[#c8dec8]/40 pt-4 mt-2">
         {/* Plus on the left */}
         <button
           type="button"
-          className="w-8 h-8 rounded-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800 text-zinc-400 hover:text-white flex items-center justify-center transition active:scale-95"
+          className="w-8 h-8 rounded-full bg-[#f4f7f4] border border-[#c8dec8]/75 hover:bg-[#e1efe8] text-[#2c5341] hover:text-emerald-950 flex items-center justify-center transition active:scale-95 cursor-pointer"
           onClick={() => setTranscript((prev) => prev + ' + Additional requirement')}
         >
           <Plus className="w-4 h-4" />
@@ -120,7 +120,7 @@ export default function VoiceSTT({ onCancel, onConfirm }: VoiceSTTProps) {
           <button
             type="button"
             onClick={onCancel}
-            className="w-8 h-8 rounded-full border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/40 text-zinc-400 hover:text-white flex items-center justify-center transition active:scale-95"
+            className="w-8 h-8 rounded-full border border-[#c8dec8]/75 hover:bg-[#f4f7f4] text-[#5e7166] hover:text-emerald-950 flex items-center justify-center transition active:scale-95 cursor-pointer"
             title="Cancel recording"
           >
             <X className="w-4 h-4" />
@@ -129,7 +129,7 @@ export default function VoiceSTT({ onCancel, onConfirm }: VoiceSTTProps) {
           <button
             type="button"
             onClick={() => onConfirm(transcript)}
-            className="w-10 h-10 rounded-full bg-white text-zinc-950 hover:bg-zinc-200 shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95"
+            className="w-10 h-10 rounded-full bg-[#244b3c] text-white hover:bg-[#1a382c] shadow-lg flex items-center justify-center transition transform hover:scale-105 active:scale-95 cursor-pointer"
             title="Confirm transcript"
           >
             <Check className="w-4.5 h-4.5 stroke-[2.5]" />

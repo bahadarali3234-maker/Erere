@@ -25,7 +25,7 @@ interface AppShowcaseItem {
   techBadge: string[];
 }
 
-export default function ShowcaseSection() {
+export default function ShowcaseSection({ themeMode = 'afternoon' }: { themeMode?: string }) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [cards, setCards] = useState<AppShowcaseItem[]>([]);
 
@@ -114,21 +114,33 @@ export default function ShowcaseSection() {
     <section className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 z-20">
       
       {/* Decorative glass glow backdrops */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] ${
+        themeMode === 'night' ? 'bg-emerald-500/5' : 'bg-emerald-700/5'
+      } rounded-full blur-[120px] pointer-events-none`} />
 
       {/* Header Content */}
       <div className="text-center max-w-2xl mx-auto mb-16">
-        <div className="inline-flex items-center space-x-2 bg-emerald-500/10 px-3.5 py-1.5 rounded-full border border-emerald-500/20 mb-4 cursor-default">
-          <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          <span className="text-[10.5px] font-mono tracking-widest text-emerald-300 uppercase font-semibold">
+        <div className={`inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full border mb-4 cursor-default transition-all duration-1000 ${
+          themeMode === 'night' 
+            ? 'bg-emerald-950/40 border-emerald-800/40 text-emerald-300' 
+            : themeMode === 'sunset'
+            ? 'bg-[#feeadd]/70 border-[#f3cfb6] text-[#ca5a27]'
+            : 'bg-[#def5ea]/80 border-[#b2e5cc]/55 text-emerald-800'
+        }`}>
+          <Sparkles className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+          <span className="text-[10.5px] font-mono tracking-widest uppercase font-semibold">
             Built with Erere Studio
           </span>
         </div>
         
-        <h2 className="text-3xl sm:text-4xl font-display font-semibold tracking-tight text-white leading-[1.15]">
+        <h2 className={`text-3xl sm:text-4xl font-display font-semibold tracking-tight leading-[1.15] transition-colors duration-1000 ${
+          themeMode === 'night' ? 'text-zinc-100' : themeMode === 'sunset' ? 'text-[#4c2409]' : 'text-[#1e3d30]'
+        }`}>
           Discover blueprints brought to <br /> life by global creators
         </h2>
-        <p className="mt-4 text-zinc-400 text-sm font-light leading-relaxed">
+        <p className={`mt-4 text-sm font-light leading-relaxed transition-colors duration-1000 ${
+          themeMode === 'night' ? 'text-zinc-400' : themeMode === 'sunset' ? 'text-orange-900/75' : 'text-[#5e7166]'
+        }`}>
           Stunning client-facing web applications generated, compiled, and deployed by users instantly. Check out their 3D layouts below.
         </p>
       </div>
@@ -144,6 +156,7 @@ export default function ShowcaseSection() {
             onHoverActive={() => setHoveredIndex(idx)}
             onHoverInactive={() => setHoveredIndex(null)}
             onLike={handleLike}
+            themeMode={themeMode}
           />
         ))}
       </div>
@@ -160,9 +173,10 @@ interface Glass3DCardProps {
   onHoverActive: () => void;
   onHoverInactive: () => void;
   onLike: (id: string) => void;
+  themeMode?: string;
 }
 
-function Glass3DCard({ project, index, isHovered, onHoverActive, onHoverInactive, onLike }: Glass3DCardProps) {
+function Glass3DCard({ project, index, isHovered, onHoverActive, onHoverInactive, onLike, themeMode = 'afternoon' }: Glass3DCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [rotX, setRotX] = useState(0);
   const [rotY, setRotY] = useState(0);
@@ -205,23 +219,39 @@ function Glass3DCard({ project, index, isHovered, onHoverActive, onHoverInactive
         perspective: 800,
         transform: `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg)`
       }}
-      className="relative bg-zinc-950/45 hover:bg-zinc-900/60 border border-white/10 hover:border-emerald-500/20 rounded-[24px] p-5 flex flex-col justify-between min-h-[380px] shadow-[0_12px_24px_-10px_rgba(0,0,0,0.5)] transition-colors duration-300 cursor-pointer overflow-hidden group select-none"
+      className={`relative border rounded-[24px] p-5 flex flex-col justify-between min-h-[380px] transition-all duration-300 cursor-pointer overflow-hidden group select-none ${
+        themeMode === 'night'
+          ? 'bg-[#0f1411]/90 hover:bg-[#141b17]/95 border-[#1b2b21] hover:border-emerald-500/35 text-zinc-100 shadow-[0_8px_30px_rgba(0,0,0,0.5)]'
+          : themeMode === 'sunset'
+          ? 'bg-[#fff6f1]/90 hover:bg-[#fff9f5]/95 border-[#eed4c5]/70 hover:border-orange-500/25 text-[#4c2409] shadow-[0_8px_20px_-10px_rgba(202,90,39,0.06)]'
+          : 'bg-white/85 hover:bg-white/95 border-[#c8dec8]/45 hover:border-[#244b3c]/25 text-[#1e3d30] shadow-[0_8px_20px_-10px_rgba(36,75,60,0.06)] hover:shadow-[0_12px_24px_-10px_rgba(36,75,60,0.12)]'
+      }`}
     >
       
       {/* Glossy sheen swipe element traveling across the card when hovered. Highly GPU-efficient */}
-      <div className="absolute inset-0 w-[200%] h-full bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-[120%] group-hover:translate-x-[120%] transition-transform duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none z-10" />
+      <div className={`absolute inset-0 w-[200%] h-full -translate-x-[120%] group-hover:translate-x-[120%] transition-transform duration-[1000ms] ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none z-10 ${
+        themeMode === 'night' 
+          ? 'bg-gradient-to-r from-transparent via-emerald-800/10 to-transparent' 
+          : 'bg-gradient-to-r from-transparent via-[#def5ea]/30 to-transparent'
+      }`} />
 
       {/* Background radial highlight gradient tracking mouse rotation */}
       <div 
-        className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+        className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
         style={{
-          background: `radial-gradient(circle at 50% 12%, ${project.glowColor} 0%, rgba(0,0,0,0) 65%)`
+          background: `radial-gradient(circle at 50% 12%, ${project.glowColor.replace('0.2', '0.08')} 0%, rgba(0,0,0,0) 65%)`
         }}
       />
 
       {/* Embedded top brand header */}
       <div style={{ transform: 'translateZ(40px)' }} className="flex justify-between items-center mb-4">
-        <span className="text-[10px] uppercase font-mono tracking-wider font-semibold text-zinc-500 bg-white/5 py-1 px-2.5 rounded-full border border-white/5">
+        <span className={`text-[10px] uppercase font-mono tracking-wider font-semibold py-1 px-2.5 rounded-full border ${
+          themeMode === 'night'
+            ? 'text-emerald-400 bg-emerald-950/40 border-emerald-850/40'
+            : themeMode === 'sunset'
+            ? 'text-[#ca5a27] bg-[#feeadd]/70 border-[#f3cfb6]'
+            : 'text-[#1e4634] bg-[#def5ea]/60 border-[#b2e5cc]/35'
+        }`}>
           {project.category}
         </span>
         <div 
@@ -229,27 +259,47 @@ function Glass3DCard({ project, index, isHovered, onHoverActive, onHoverInactive
             e.stopPropagation();
             onLike(project.id);
           }}
-          className="flex items-center space-x-1.5 opacity-60 hover:opacity-100 group-hover:opacity-100 transition-all bg-white/5 hover:bg-emerald-500/20 hover:text-emerald-300 px-2.5 py-1 rounded-full border border-white/5 cursor-pointer active:scale-95"
+          className={`flex items-center space-x-1.5 opacity-80 hover:opacity-100 group-hover:opacity-100 transition-all px-2.5 py-1 rounded-full border cursor-pointer active:scale-95 ${
+            themeMode === 'night'
+              ? 'bg-emerald-950/30 border-emerald-850/30 text-emerald-400'
+              : themeMode === 'sunset'
+              ? 'bg-[#feeadd]/50 border-[#f3cfb6]/50 text-[#ca5a27]'
+              : 'bg-[#def5ea]/40 hover:bg-[#def5ea]/80 text-[#1e4634] border-[#b2e5cc]/30'
+          }`}
           title="Vote for this design blueprint"
         >
-          <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20 group-hover:text-emerald-400" />
+          <Flame className={`w-3.5 h-3.5 fill-amber-500/10 ${themeMode === 'night' ? 'text-shadow text-emerald-400' : 'text-amber-600'}`} />
           <span className="font-mono text-[10px] font-bold">{project.likes}</span>
         </div>
       </div>
 
       {/* Main info text wrapper to maintain spatial integrity */}
       <div style={{ transform: 'translateZ(20px)' }} className="my-auto space-y-3">
-        <h4 className="font-display font-semibold text-lg text-white group-hover:text-emerald-300 transition-colors tracking-tight">
+        <h4 className={`font-display font-semibold text-lg transition-colors tracking-tight ${
+          themeMode === 'night'
+            ? 'text-zinc-100 group-hover:text-emerald-400'
+            : themeMode === 'sunset'
+            ? 'text-[#4c2409] group-hover:text-orange-600'
+            : 'text-[#1e3d30] group-hover:text-[#244b3c]'
+        }`}>
           {project.title}
         </h4>
-        <p className="text-zinc-400 text-xs font-light leading-relaxed min-h-[64px] line-clamp-3">
+        <p className={`text-xs font-light leading-relaxed min-h-[64px] line-clamp-3 ${
+          themeMode === 'night' ? 'text-zinc-400' : themeMode === 'sunset' ? 'text-orange-950/70' : 'text-[#5e7166]'
+        }`}>
           {project.description}
         </p>
 
         {/* Technology/Attribute badge list */}
         <div className="flex flex-wrap gap-1.5 pt-2">
           {project.techBadge.map((tech, key) => (
-            <span key={key} className="text-[9px] font-mono font-medium text-zinc-400 bg-zinc-900/80 border border-zinc-800/60 py-0.5 px-2 rounded-md">
+            <span key={key} className={`text-[9px] font-mono font-semibold py-0.5 px-2 rounded-md border ${
+              themeMode === 'night'
+                ? 'text-emerald-300 bg-emerald-950/40 border-emerald-850/40'
+                : themeMode === 'sunset'
+                ? 'text-[#ca5a27] bg-[#feeadd]/40 border-[#eed4c5]/40'
+                : 'text-[#2c5341] bg-[#e1efe8]/60 border-[#c8dec8]/50'
+            }`}>
               {tech}
             </span>
           ))}
@@ -257,18 +307,30 @@ function Glass3DCard({ project, index, isHovered, onHoverActive, onHoverInactive
       </div>
 
       {/* Card footer details */}
-      <div style={{ transform: 'translateZ(30px)' }} className="flex items-center justify-between border-t border-white/5 pt-4 mt-4 text-[11px]">
+      <div style={{ transform: 'translateZ(30px)' }} className={`flex items-center justify-between border-t pt-4 mt-4 text-[11px] ${
+        themeMode === 'night' ? 'border-emerald-950/40' : themeMode === 'sunset' ? 'border-[#eed4c5]/30' : 'border-[#c8dec8]/25'
+      }`}>
         <div className="flex items-center space-x-2">
-          <div className="w-5 h-5 rounded-full bg-zinc-800 flex items-center justify-center text-[8.5px] text-zinc-300 font-bold border border-white/10">
+          <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8.5px] font-bold border ${
+            themeMode === 'night'
+              ? 'bg-emerald-950 border-emerald-800 text-emerald-400'
+              : themeMode === 'sunset'
+              ? 'bg-[#feeadd] border-[#f3cfb6] text-[#ca5a27]'
+              : 'bg-[#e1efe8] border-[#c8dec8]/40 text-[#1e4634]'
+          }`}>
             {project.author[0]}
           </div>
-          <span className="text-zinc-400 font-medium">by {project.author}</span>
+          <span className={`font-medium font-sans ${
+            themeMode === 'night' ? 'text-zinc-400' : themeMode === 'sunset' ? 'text-orange-950/75' : 'text-[#5e7166]'
+          }`}>by {project.author}</span>
         </div>
 
-        <div className="flex items-center space-x-1 font-mono text-zinc-500 group-hover:text-white transition-colors duration-250">
+        <div className={`flex items-center space-x-1 font-mono transition-colors duration-250 ${
+          themeMode === 'night' ? 'text-zinc-400 group-hover:text-emerald-400' : themeMode === 'sunset' ? 'text-orange-950/70 group-hover:text-orange-600' : 'text-[#5e7166] group-hover:text-[#1e3d30]'
+        }`}>
           <Eye className="w-3.5 h-3.5" />
           <span>{project.views}</span>
-          <ChevronAction />
+          <ChevronAction themeMode={themeMode} />
         </div>
       </div>
 
@@ -276,9 +338,15 @@ function Glass3DCard({ project, index, isHovered, onHoverActive, onHoverInactive
   );
 }
 
-function ChevronAction() {
+function ChevronAction({ themeMode }: { themeMode?: string }) {
   return (
-    <div className="w-5 h-5 rounded-full bg-white/5 group-hover:bg-emerald-500 group-hover:text-zinc-950 flex items-center justify-center ml-1.5 transition-all">
+    <div className={`w-5 h-5 rounded-full flex items-center justify-center ml-1.5 transition-all ${
+      themeMode === 'night'
+        ? 'bg-emerald-950/50 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-zinc-950'
+        : themeMode === 'sunset'
+        ? 'bg-[#feeadd]/60 text-[#ca5a27] group-hover:bg-[#ca5a27] group-hover:text-white'
+        : 'bg-[#def5ea]/60 group-hover:bg-[#244b3c] group-hover:text-white'
+    }`}>
       <ExternalLink className="w-2.5 h-2.5" />
     </div>
   );

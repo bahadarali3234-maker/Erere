@@ -34,6 +34,7 @@ interface MyProjectsDrawerProps {
   projects: UserProject[];
   onDeleteProject: (id: string) => void;
   onSelectProject: (prompt: string) => void;
+  themeMode?: string;
 }
 
 export default function MyProjectsDrawer({ 
@@ -41,7 +42,8 @@ export default function MyProjectsDrawer({
   onClose, 
   projects, 
   onDeleteProject,
-  onSelectProject
+  onSelectProject,
+  themeMode = 'afternoon'
 }: MyProjectsDrawerProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -182,7 +184,13 @@ export default function MyProjectsDrawer({
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 24, stiffness: 190 }}
-            className="fixed inset-y-0 left-0 w-full max-w-[340px] sm:max-w-[360px] bg-[#0d0d0d] border-r border-[#151515] p-5 shadow-[10px_0_40px_rgba(0,0,0,0.85)] flex flex-col z-[50]"
+            className={`fixed inset-y-0 left-0 w-full max-w-[340px] sm:max-w-[360px] p-5 shadow-[5px_0_30px_rgba(36,75,60,0.08)] flex flex-col z-[50] transition-colors duration-1000 ${
+              themeMode === 'night' 
+                ? 'bg-[#0f1411] border-r border-[#1b2b21] text-zinc-100' 
+                : themeMode === 'sunset'
+                ? 'bg-[#fdf3e9] border-r border-[#eed4c5]/75 text-[#4c2409]'
+                : 'bg-[#fdfefd] border-r border-[#c8dec8]/60 text-[#1e3d30]'
+            }`}
           >
             
             {/* Header / Active controllers row exactly matching screenshot */}
@@ -190,7 +198,13 @@ export default function MyProjectsDrawer({
               
               {/* Search Icon circle button */}
               <button 
-                className="w-11 h-11 rounded-full bg-[#181818] border border-[#242424] flex items-center justify-center text-zinc-400 hover:text-white transition active:scale-95 shrink-0"
+                className={`w-11 h-11 rounded-full border flex items-center justify-center transition active:scale-95 shrink-0 ${
+                  themeMode === 'night' 
+                    ? 'bg-zinc-900 border-emerald-950/40 text-emerald-400 hover:bg-emerald-950/20' 
+                    : themeMode === 'sunset'
+                    ? 'bg-[#f7e6d9] border-[#eed4c5] text-[#ca5a27] hover:bg-[#ebd0be]'
+                    : 'bg-[#f4f7f4]/80 border border-[#c8dec8]/70 text-[#2c5341] hover:text-emerald-950 hover:bg-[#ebf1ec]'
+                }`}
                 title="Search Blueprints"
               >
                 <Search className="w-4 h-4" />
@@ -200,7 +214,13 @@ export default function MyProjectsDrawer({
               <div className="relative flex-1">
                 <button 
                   onClick={() => setFilterOpen(!filterOpen)}
-                  className="flex items-center justify-between space-x-2 bg-[#181818] border border-[#242424] hover:bg-[#202020] px-4 py-2.5 rounded-full text-[13px] text-zinc-300 hover:text-white transition font-medium w-full text-left"
+                  className={`flex items-center justify-between space-x-2 border px-4 py-2.5 rounded-full text-[13px] font-semibold w-full text-left transition ${
+                    themeMode === 'night' 
+                      ? 'bg-zinc-900 border-emerald-950/40 text-emerald-400 hover:bg-emerald-950/20' 
+                      : themeMode === 'sunset'
+                      ? 'bg-[#f7e6d9] border-[#eed4c5] text-[#ca5a27] hover:bg-[#ebd0be]'
+                      : 'bg-[#f4f7f4]/80 border border-[#c8dec8]/70 text-[#2c5341] hover:text-[#12381e] hover:bg-[#ebf1ec]'
+                  }`}
                 >
                   <span className="truncate">Created by me</span>
                   <ChevronDown className="w-4 h-4 text-zinc-500 shrink-0" />
@@ -212,17 +232,27 @@ export default function MyProjectsDrawer({
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 5 }}
-                      className="absolute left-0 right-0 mt-1 bg-[#1c1c1c] border border-[#2c2c2c] rounded-xl overflow-hidden z-50 text-[12px] shadow-xl text-zinc-300"
+                      className={`absolute left-0 right-0 mt-1 border rounded-xl overflow-hidden z-50 text-[12px] shadow-xl ${
+                        themeMode === 'night' 
+                          ? 'bg-zinc-950 border-[#1b2b21] text-emerald-400' 
+                          : themeMode === 'sunset'
+                          ? 'bg-[#fdf3e9] border-[#eed4c5] text-[#ca5a27]'
+                          : 'bg-white border-[#c8dec8] text-[#2c5341]'
+                      }`}
                     >
                       <button 
                         onClick={() => setFilterOpen(false)}
-                        className="w-full text-left px-4 py-2 hover:bg-[#282828] transition font-medium"
+                        className={`w-full text-left px-4 py-2 font-medium transition ${
+                          themeMode === 'night' ? 'hover:bg-[#152a1e] text-emerald-300' : 'hover:bg-[#def5ea]/40 text-emerald-950'
+                        }`}
                       >
                         Created by me ({projects.length})
                       </button>
                       <button 
                         onClick={() => setFilterOpen(false)}
-                        className="w-full text-left px-4 py-2 hover:bg-[#282828] transition text-zinc-500"
+                        className={`w-full text-left px-4 py-2 font-medium transition ${
+                          themeMode === 'night' ? 'hover:bg-zinc-900 text-zinc-400' : 'hover:bg-[#def5ea]/45 text-[#5e7166]'
+                        }`}
                       >
                         All workspace templates
                       </button>
@@ -234,7 +264,11 @@ export default function MyProjectsDrawer({
               {/* Close helper button for touch screen exit */}
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-zinc-900/50 hover:bg-zinc-800 text-zinc-500 hover:text-white flex items-center justify-center transition sm:hidden"
+                className={`w-8 h-8 rounded-full flex items-center justify-center border transition sm:hidden ${
+                  themeMode === 'night' 
+                    ? 'bg-zinc-900 border-zinc-800 text-zinc-400' 
+                    : 'bg-[#f4f7f4] hover:bg-[#e1efe8] text-[#5e7166] hover:text-emerald-950 border-[#c8dec8]/50'
+                }`}
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -247,7 +281,13 @@ export default function MyProjectsDrawer({
                 placeholder="Search prompt database..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#141414] border border-[#1d1d1d] focus:border-zinc-800 focus:outline-none rounded-xl px-3 py-2 text-xs text-white placeholder-zinc-600"
+                className={`w-full focus:outline-none rounded-xl px-3 py-2 text-xs transition-colors ${
+                  themeMode === 'night' 
+                    ? 'bg-[#152a1e] border border-emerald-950/30 text-zinc-100 placeholder-zinc-500/80 focus:border-emerald-500' 
+                    : themeMode === 'sunset'
+                    ? 'bg-[#fcfaf9]/90 border border-[#eed4c5]/60 text-orange-950 placeholder-orange-900/40 focus:border-orange-500'
+                    : 'bg-[#f4f7f4]/60 border border-[#c8dec8]/60 focus:border-[#244b3c] text-[#1e3d30] placeholder-[#5e7166]/60'
+                }`}
               />
             </div>
 
@@ -260,12 +300,20 @@ export default function MyProjectsDrawer({
                   onSelectProject('');
                   onClose();
                 }}
-                className="w-full flex items-center space-x-3 px-3 py-2.5 rounded-2xl hover:bg-[#151515] transition group text-left"
+                className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-2xl transition group text-left ${
+                  themeMode === 'night' ? 'hover:bg-emerald-950/20' : 'hover:bg-[#e1efe8]/35'
+                }`}
               >
-                <div className="w-12 h-12 rounded-2xl border border-dashed border-[#2d2d2d] flex items-center justify-center text-zinc-400 group-hover:text-emerald-400 group-hover:border-emerald-500/50 transition shrink-0 bg-transparent">
+                <div className={`w-12 h-12 rounded-2xl border border-dashed flex items-center justify-center transition shrink-0 bg-transparent ${
+                  themeMode === 'night' 
+                    ? 'border-emerald-800 text-emerald-400 group-hover:text-emerald-300 group-hover:border-emerald-500' 
+                    : 'border-[#c8dec8]/70 text-[#5e7166] group-hover:text-emerald-800 group-hover:border-[#244b3c]/50'
+                }`}>
                   <Plus className="w-5 h-5 stroke-[2]" />
                 </div>
-                <span className="text-[14px] font-medium text-zinc-350 tracking-tight group-hover:text-white transition">
+                <span className={`text-[14px] font-medium tracking-tight transition ${
+                  themeMode === 'night' ? 'text-emerald-400 group-hover:text-emerald-300' : 'text-[#2c5341] group-hover:text-[#1e3d30]'
+                }`}>
                   Create new project
                 </span>
               </button>
@@ -281,7 +329,11 @@ export default function MyProjectsDrawer({
                     delay: idx * 0.04, 
                     ease: [0.16, 1, 0.3, 1] 
                   }}
-                  whileHover={{ scale: 1.02, x: 4, backgroundColor: '#141414' }}
+                  whileHover={{ 
+                    scale: 1.02, 
+                    x: 4, 
+                    backgroundColor: themeMode === 'night' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(225, 239, 232, 0.45)' 
+                  }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     onSelectProject(item.prompt);
@@ -299,10 +351,14 @@ export default function MyProjectsDrawer({
                     </div>
 
                     <div className="min-w-0 pr-2">
-                      <h4 className="font-display font-medium text-[14.5px] text-zinc-200 group-hover:text-emerald-400 transition-colors truncate">
+                      <h4 className={`font-display font-medium text-[14.5px] transition-colors truncate ${
+                        themeMode === 'night' ? 'text-zinc-200 group-hover:text-emerald-400' : 'text-[#2c5341]/95 group-hover:text-emerald-900'
+                      }`}>
                         {item.title}
                       </h4>
-                      <p className="text-[12px] text-zinc-500 font-light mt-0.5">
+                      <p className={`text-[12px] font-light mt-0.5 ${
+                        themeMode === 'night' ? 'text-zinc-450' : 'text-[#5e7166]'
+                      }`}>
                         {item.createdAt}
                       </p>
                     </div>
@@ -312,11 +368,15 @@ export default function MyProjectsDrawer({
                   <div className="flex items-center space-x-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => handleCopy(item.id, item.prompt, e)}
-                      className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition"
+                      className={`p-1.5 rounded-lg border transition ${
+                        themeMode === 'night' 
+                          ? 'bg-zinc-900 border-zinc-800 text-emerald-400 hover:text-emerald-350 hover:bg-zinc-800' 
+                          : 'bg-white border-[#c8dec8]/65 text-[#2c5341] hover:text-[#1a3528] hover:bg-[#e1efe8]/60'
+                      }`}
                       title="Copy Prompt IP"
                     >
                       {copiedId === item.id ? (
-                        <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                        <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
                         <Copy className="w-3.5 h-3.5" />
                       )}
@@ -325,7 +385,11 @@ export default function MyProjectsDrawer({
                     {'isUserProject' in item && (
                       <button
                         onClick={(e) => handleDelete(item.id, e)}
-                        className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-850 text-zinc-650 hover:text-red-400 hover:bg-red-500/10 transition"
+                        className={`p-1.5 rounded-lg border transition ${
+                          themeMode === 'night' 
+                            ? 'bg-zinc-900 border-[#1b2b21] text-red-400 hover:bg-red-950/40' 
+                            : 'bg-white border-[#c8dec8]/65 text-red-650 hover:text-red-700 hover:bg-red-50'
+                        }`}
                         title="Delete Blueprint"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -334,30 +398,44 @@ export default function MyProjectsDrawer({
                   </div>
 
                 </motion.div>
-              ))}
+               ))}
             </div>
 
             {/* --- BOTTOM PROFILE CONTAINER SECURE PILLS --- */}
-            <div className="pt-4 border-t border-[#171717] mt-3 flex items-center justify-between">
+            <div className={`pt-4 border-t mt-3 flex items-center justify-between ${
+              themeMode === 'night' ? 'border-[#112318]' : 'border-[#c8dec8]/40'
+            }`}>
               
               {/* "Bahadar's Lovable" Pill Container with arrow */}
-              <button className="flex items-center space-x-2 bg-[#121212]/90 hover:bg-[#181818] border border-[#222] hover:border-[#333] px-3.5 py-2 rounded-full transition text-left cursor-pointer active:scale-95 flex-1 max-w-[210px] mr-2">
+              <button className={`flex items-center space-x-2 border px-3.5 py-2 rounded-full transition text-left cursor-pointer active:scale-95 flex-1 max-w-[210px] mr-2 shadow-sm ${
+                themeMode === 'night' 
+                  ? 'bg-[#152a1e] border-emerald-900/30 text-emerald-400 hover:bg-emerald-950/40' 
+                  : 'bg-[#f4f7f4] border-[#c8dec8]/60 hover:bg-[#e1efe8]/80 hover:border-[#244b3c]/30 text-[#2c5341]'
+              }`}>
                 <div className="w-7 h-7 rounded-full bg-pink-600 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-md">
                   B
                 </div>
-                <span className="text-[11.5px] font-medium text-zinc-300 truncate tracking-tight pr-1">
+                <span className={`text-[11.5px] font-semibold truncate tracking-tight pr-1 ${
+                  themeMode === 'night' ? 'text-emerald-300' : 'text-[#1e4634]'
+                }`}>
                   Bahadar's Lovable
                 </span>
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-650 shrink-0 ml-auto" />
+                <ChevronDown className="w-3.5 h-3.5 text-[#5e7166] shrink-0 ml-auto" />
               </button>
 
               {/* Secure gray active secondary profile bubble with live green/red indicator dot */}
               <div className="relative cursor-pointer shrink-0">
-                <div className="w-10 h-10 rounded-full bg-[#1b2326] border border-[#2d3b40] flex items-center justify-center text-sm font-semibold text-zinc-300 tracking-wide">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold tracking-wide shadow-sm ${
+                  themeMode === 'night' 
+                    ? 'bg-[#152a1e] border border-emerald-900/30 text-emerald-400' 
+                    : 'bg-[#e1efe8] border border-[#c8dec8]/75 text-[#1e3d30]'
+                }`}>
                   B
                 </div>
-                {/* Active live socket indicator red bubble in screenshot */}
-                <div className="absolute top-0 right-0 w-3 h-3 bg-red-500 border-2 border-[#0d0d0d] rounded-full" />
+                {/* Active live socket indicator bubble */}
+                <div className={`absolute top-0 right-0 w-3 h-3 bg-emerald-500 border-2 rounded-full ${
+                  themeMode === 'night' ? 'border-[#0f1411]' : 'border-[#fdfefd]'
+                }`} />
               </div>
 
             </div>
