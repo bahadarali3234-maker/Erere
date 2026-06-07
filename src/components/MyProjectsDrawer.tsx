@@ -200,7 +200,7 @@ export default function MyProjectsDrawer({
               <button 
                 className={`w-11 h-11 rounded-full border flex items-center justify-center transition active:scale-95 shrink-0 ${
                   themeMode === 'night' 
-                    ? 'bg-zinc-900 border-emerald-950/40 text-emerald-400 hover:bg-emerald-950/20' 
+                    ? 'bg-zinc-900 border-[#1b2b21]/40 text-emerald-400 hover:bg-[#152a1e]/20' 
                     : themeMode === 'sunset'
                     ? 'bg-[#f7e6d9] border-[#eed4c5] text-[#ca5a27] hover:bg-[#ebd0be]'
                     : 'bg-[#f4f7f4]/80 border border-[#c8dec8]/70 text-[#2c5341] hover:text-emerald-950 hover:bg-[#ebf1ec]'
@@ -216,7 +216,7 @@ export default function MyProjectsDrawer({
                   onClick={() => setFilterOpen(!filterOpen)}
                   className={`flex items-center justify-between space-x-2 border px-4 py-2.5 rounded-full text-[13px] font-semibold w-full text-left transition ${
                     themeMode === 'night' 
-                      ? 'bg-zinc-900 border-emerald-950/40 text-emerald-400 hover:bg-emerald-950/20' 
+                      ? 'bg-zinc-900 border-[#1b2b21]/40 text-emerald-400 hover:bg-[#152a1e]/20' 
                       : themeMode === 'sunset'
                       ? 'bg-[#f7e6d9] border-[#eed4c5] text-[#ca5a27] hover:bg-[#ebd0be]'
                       : 'bg-[#f4f7f4]/80 border border-[#c8dec8]/70 text-[#2c5341] hover:text-[#12381e] hover:bg-[#ebf1ec]'
@@ -266,7 +266,7 @@ export default function MyProjectsDrawer({
                 onClick={onClose}
                 className={`w-8 h-8 rounded-full flex items-center justify-center border transition sm:hidden ${
                   themeMode === 'night' 
-                    ? 'bg-zinc-900 border-zinc-800 text-zinc-400' 
+                    ? 'bg-zinc-900 border-[#1b2b21] text-zinc-400' 
                     : 'bg-[#f4f7f4] hover:bg-[#e1efe8] text-[#5e7166] hover:text-emerald-950 border-[#c8dec8]/50'
                 }`}
               >
@@ -370,7 +370,7 @@ export default function MyProjectsDrawer({
                       onClick={(e) => handleCopy(item.id, item.prompt, e)}
                       className={`p-1.5 rounded-lg border transition ${
                         themeMode === 'night' 
-                          ? 'bg-zinc-900 border-zinc-800 text-emerald-400 hover:text-emerald-350 hover:bg-zinc-800' 
+                          ? 'bg-zinc-900 border-[#1b2b21] text-emerald-400 hover:text-emerald-350 hover:bg-zinc-800' 
                           : 'bg-white border-[#c8dec8]/65 text-[#2c5341] hover:text-[#1a3528] hover:bg-[#e1efe8]/60'
                       }`}
                       title="Copy Prompt IP"
@@ -409,7 +409,7 @@ export default function MyProjectsDrawer({
               {/* "Bahadar's Lovable" Pill Container with arrow */}
               <button className={`flex items-center space-x-2 border px-3.5 py-2 rounded-full transition text-left cursor-pointer active:scale-95 flex-1 max-w-[210px] mr-2 shadow-sm ${
                 themeMode === 'night' 
-                  ? 'bg-[#152a1e] border-emerald-900/30 text-emerald-400 hover:bg-emerald-950/40' 
+                  ? 'bg-[#152a1e] border-emerald-900/30 text-emerald-400 hover:bg-[#152a1e]/40' 
                   : 'bg-[#f4f7f4] border-[#c8dec8]/60 hover:bg-[#e1efe8]/80 hover:border-[#244b3c]/30 text-[#2c5341]'
               }`}>
                 <div className="w-7 h-7 rounded-full bg-pink-600 flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-md">
@@ -434,7 +434,7 @@ export default function MyProjectsDrawer({
                 </div>
                 {/* Active live socket indicator bubble */}
                 <div className={`absolute top-0 right-0 w-3 h-3 bg-emerald-500 border-2 rounded-full ${
-                  themeMode === 'night' ? 'border-[#0f1411]' : 'border-[#fdfefd]'
+                  themeMode === 'night' ? 'border-[#0a0f0d]' : 'border-[#fdfefd]'
                 }`} />
               </div>
 

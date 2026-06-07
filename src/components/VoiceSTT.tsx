@@ -10,42 +10,96 @@ interface VoiceSTTProps {
 export default function VoiceSTT({ onCancel, onConfirm }: VoiceSTTProps) {
   const [transcript, setTranscript] = useState('');
   const [isDone, setIsDone] = useState(false);
-
-  // Simulated spoken phrase list that gets typed out in real-time to mimic cutting-edge STT models
-  const spokenPhrases = [
-    'Create ',
-    'an ',
-    'interactive ',
-    'real-time ',
-    'meeting ',
-    'notes ',
-    'summarizer ',
-    'with ',
-    'emerald-green ',
-    'theme ',
-    'and ',
-    '3D ',
-    'parallax ',
-    'layouts ',
-    'and ',
-    'live ',
-    'collaborative ',
-    'features.'
-  ];
+  const [isUsingSpeechAPI, setIsUsingSpeechAPI] = useState(false);
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < spokenPhrases.length) {
-        setTranscript((prev) => prev + spokenPhrases[index]);
-        index++;
-      } else {
-        clearInterval(interval);
-        setIsDone(true);
-      }
-    }, 280);
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    let recognition: any = null;
+    let fallbackInterval: NodeJS.Timeout | null = null;
 
-    return () => clearInterval(interval);
+    function startSimulation() {
+      setIsUsingSpeechAPI(false);
+      const spokenPhrases = [
+        'Create ',
+        'an ',
+        'interactive ',
+        'real-time ',
+        'meeting ',
+        'notes ',
+        'summarizer ',
+        'with ',
+        'emerald-green ',
+        'theme ',
+        'and ',
+        '3D ',
+        'parallax ',
+        'layouts ',
+        'and ',
+        'live ',
+        'collaborative ',
+        'features.'
+      ];
+      let index = 0;
+      fallbackInterval = setInterval(() => {
+        if (index < spokenPhrases.length) {
+          setTranscript((prev) => prev + spokenPhrases[index]);
+          index++;
+        } else {
+          if (fallbackInterval) clearInterval(fallbackInterval);
+          setIsDone(true);
+        }
+      }, 280);
+    }
+
+    if (SpeechRecognition) {
+      try {
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onstart = () => {
+          setIsUsingSpeechAPI(true);
+        };
+
+        recognition.onresult = (event: any) => {
+          let finalTranscript = '';
+          for (let i = event.resultIndex; i < event.results.length; ++i) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+          if (finalTranscript) {
+            setTranscript(finalTranscript);
+          }
+        };
+
+        recognition.onerror = (err: any) => {
+          console.warn("Speech API error, resorting to fallback typist:", err);
+          startSimulation();
+        };
+
+        recognition.onend = () => {
+          setIsDone(true);
+        };
+
+        recognition.start();
+      } catch (e) {
+        console.warn("Error starting speech recognition, using fallback typist:", e);
+        startSimulation();
+      }
+    } else {
+      startSimulation();
+    }
+
+    return () => {
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (e) {}
+      }
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+      }
+    };
   }, []);
 
   // Equalizer bar heights

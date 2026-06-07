@@ -1,20 +1,91 @@
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Hanken+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
   --font-serif-inst: "Instrument Serif", serif;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Space Grotesk", sans-serif;
+  --font-display: "Hanken Grotesk", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  
+  --font-body-sm: "Inter", sans-serif;
+  --font-body-lg: "Inter", sans-serif;
+  --font-headline-md: "Hanken Grotesk", sans-serif;
+  --font-headline-lg: "Hanken Grotesk", sans-serif;
+  --font-label-code: "JetBrains Mono", monospace;
+
+  --color-tertiary-fixed-dim: #b7c8e1;
+  --color-surface-dim: #d8dadc;
+  --color-background: #f7f9fb;
+  --color-tertiary-fixed: #d3e4fe;
+  --color-on-tertiary-container: #4a5a70;
+  --color-inverse-surface: #2d3133;
+  --color-error: #ba1a1a;
+  --color-tertiary-container: #c1d2ec;
+  --color-outline: #6b7a7d;
+  --color-tertiary: #505f76;
+  --color-on-primary-fixed: #001f24;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-surface-variant: #3b494c;
+  --color-primary-container: #00e5ff;
+  --color-on-primary-container: #00626e;
+  --color-surface-tint: #006875;
+  --color-outline-variant: #bac9cc;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #dae2fd;
+  --color-inverse-primary: #00daf3;
+  --color-surface-bright: #f7f9fb;
+  --color-on-tertiary-fixed: #0b1c30;
+  --color-surface-container-highest: #e0e3e5;
+  --color-on-secondary-container: #5c647a;
+  --color-on-tertiary-fixed-variant: #38485d;
+  --color-on-secondary-fixed: #131b2e;
+  --color-primary-fixed-dim: #00daf3;
+  --color-primary-fixed: #9cf0ff;
+  --color-on-tertiary: #ffffff;
+  --color-surface-container: #eceef0;
+  --color-primary: #006875;
+  --color-on-surface: #191c1e;
+  --color-on-primary: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-inverse-on-surface: #eff1f3;
+  --color-surface: #f7f9fb;
+  --color-on-secondary-fixed-variant: #3f465c;
+  --color-on-error-container: #93000a;
+  --color-on-error: #ffffff;
+  --color-surface-variant: #e0e3e5;
+  --color-surface-container-low: #f2f4f6;
+  --color-on-primary-fixed-variant: #004f58;
+  --color-secondary-fixed: #dae2fd;
+  --color-secondary-fixed-dim: #bec6e0;
+  --color-secondary: #565e74;
+  --color-on-background: #191c1e;
+  --color-surface-container-high: #e6e8ea;
 }
 
-/* Custom background mask and glow overlay to perfectly mimic the reference design */
-.ambient-glow {
-  background: radial-gradient(circle at 50% 10%, rgba(16, 185, 129, 0.15) 0%, rgba(4, 120, 87, 0.05) 50%, rgba(0, 0, 0, 0) 100%);
+body {
+  background-color: #f7f9fb;
+  font-family: var(--font-body-sm);
+  color: #191c1e;
 }
 
-.subtle-blur {
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: #bac9cc;
+  border-radius: 10px;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
+  border: 1px solid rgba(186, 201, 204, 0.4);
 }
+
 
