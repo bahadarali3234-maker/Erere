@@ -88,4 +88,61 @@ body {
   border: 1px solid rgba(186, 201, 204, 0.4);
 }
 
+/* Premium Markdown & Code Block Styles */
+.markdown-body {
+  font-size: 0.875rem;
+  line-height: 1.45rem;
+}
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  font-weight: 700;
+  color: inherit;
+  margin-top: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.markdown-body h3 { font-size: 1rem; }
+.markdown-body h4 { font-size: 0.9rem; }
+.markdown-body p {
+  margin-bottom: 0.6rem;
+}
+.markdown-body ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 0.6rem;
+}
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin-bottom: 0.6rem;
+}
+.markdown-body li {
+  margin-bottom: 0.25rem;
+}
+.markdown-body code {
+  font-family: "JetBrains Mono", var(--font-mono), monospace;
+  font-size: 0.78rem;
+  background-color: rgba(36, 75, 60, 0.08);
+  color: #1a3c2e;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+.markdown-body pre {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.85rem;
+  background-color: #1e1e24;
+  color: #f1f5f9;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+}
+.markdown-body pre code {
+  color: #34d399;
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.75rem;
+  line-height: 1.15rem;
+}
+
+
 

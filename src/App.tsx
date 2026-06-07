@@ -1,5 +1,6 @@
 import React, { useState, FormEvent, useEffect, useRef, TouchEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import Markdown from 'react-markdown';
 import { 
   Play, 
   Trash2, 
@@ -14,6 +15,10 @@ import {
   Cpu, 
   Settings, 
   MessageSquare,
+  RotateCcw,
+  Copy,
+  Edit2,
+  Square,
   Network,
   Bell,
   Check,
@@ -105,6 +110,22 @@ export default function App() {
   const [activeScreen, setActiveScreen] = useState<'fitness' | 'expenses' | 'todo' | 'saas'>('fitness');
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Real-time AI architect and Toast state metrics
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: 'success' | 'error' | 'info' }[]>([]);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = `toast-${Date.now()}`;
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
+  
   // Mobile responsive layout states
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [mobileSubTab, setMobileSubTab] = useState<'chat' | 'preview'>('chat');
@@ -188,6 +209,10 @@ export default function App() {
       isCustomLovableCard: true
     }
   ]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isGenerating]);
 
   const [promptInput, setPromptInput] = useState('');
   const [landingPrompt, setLandingPrompt] = useState('');
@@ -401,10 +426,153 @@ export default function App() {
     }, 250);
   };
 
+  // Core AI architecture executor interacting with backend
+  const handlePromptExecution = async (queryText: string, customHistory?: Message[]) => {
+    if (isGenerating) return;
+
+    setIsGenerating(true);
+    setIsCompiling(true);
+    setCompilationProgress(10);
+    setCompilationMessage('Analyzing prompt and syncing workspace templates...');
+
+    // Progress bar simulation in parallel to the real async backend request
+    const mockProgressInterval = setInterval(() => {
+      setCompilationProgress(p => {
+        if (p < 85) return p + Math.floor(Math.random() * 8) + 2;
+        return p;
+      });
+    }, 450);
+
+    // AbortController setup for prompt cancel/stop generation
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const currentHistoryList = customHistory || messages;
+
+    try {
+      showToast('Contacting BuildCraft AI Core...', 'info');
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: queryText,
+          history: currentHistoryList.map(m => ({ sender: m.sender, text: m.text })),
+          deepThinking: isDeepThinking
+        }),
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned error status ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      clearInterval(mockProgressInterval);
+      setCompilationProgress(100);
+      setCompilationMessage('Binding React state hooks and compiling schema...');
+
+      setTimeout(() => {
+        setIsCompiling(false);
+        // Toggle phone simulator screen if returned
+        if (data.screen && ['fitness', 'expenses', 'todo', 'saas'].includes(data.screen)) {
+          setActiveScreen(data.screen as any);
+        }
+
+        // Setup the generated interactive properties if applicable
+        const aiMessageId = `msg-${Date.now()}-ai-reply`;
+        const finalAiMessage: Message = {
+          id: aiMessageId,
+          sender: 'ai',
+          text: data.text || 'Process completed successfully.',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          checklist: data.checklist || [],
+          fileAttachment: data.fileName ? { name: data.fileName, size: `${Math.round((data.fileContent?.length || 0) / 102) / 10} KB` } : undefined
+        };
+
+        setMessages(prev => [...prev, finalAiMessage]);
+        setIsGenerating(false);
+        showToast('AI schema compiled successfully!', 'success');
+      }, 500);
+
+    } catch (err: any) {
+      clearInterval(mockProgressInterval);
+      setIsCompiling(false);
+      setIsGenerating(false);
+
+      if (err.name === 'AbortError') {
+        showToast('AI response generation stopped by user.', 'info');
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `msg-${Date.now()}-ai-stopped`,
+            sender: 'ai',
+            text: 'System: AI Generation text sequence successfully stopped by architect client query.',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+      } else {
+        console.error('AI compilation failed: ', err);
+        showToast('Failed to reach AI compiler. Click Retry to try again.', 'error');
+        setMessages(prev => [
+          ...prev,
+          {
+            id: `msg-${Date.now()}-ai-error`,
+            sender: 'ai',
+            text: `### AI Generation Error\n\nFailed to sync with the backend construction server because of high-traffic or offline connection.\n\n**Error details:** ${err.message || err.toString()}`,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
+      }
+    } finally {
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleStopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
+  const handleRegenerateResponse = () => {
+    const userMsgs = messages.filter(m => m.sender === 'user');
+    if (userMsgs.length === 0) return;
+    const lastUserMsg = userMsgs[userMsgs.length - 1];
+    
+    // Filter out messages after the last user message, so we regenerate from that query
+    const lastUserIdx = messages.lastIndexOf(lastUserMsg);
+    if (lastUserIdx !== -1) {
+      const truncatedHistory = messages.slice(0, lastUserIdx + 1);
+      setMessages(truncatedHistory);
+      handlePromptExecution(lastUserMsg.text, truncatedHistory);
+    }
+  };
+
+  const handleStartEditMessage = (id: string, text: string) => {
+    setEditingMessageId(id);
+    setEditingText(text);
+  };
+
+  const handleSaveEditMessage = (id: string) => {
+    if (!editingText.trim()) return;
+    
+    const msgIndex = messages.findIndex(m => m.id === id);
+    if (msgIndex !== -1) {
+      const updated = [...messages];
+      updated[msgIndex] = { ...updated[msgIndex], text: editingText };
+      
+      const truncated = updated.slice(0, msgIndex + 1);
+      setMessages(truncated);
+      setEditingMessageId(null);
+      handlePromptExecution(editingText, truncated);
+    }
+  };
+
   // Chat message submission
   const handleGenerateSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!promptInput.trim()) return;
+    if (!promptInput.trim() || isGenerating) return;
 
     const queryText = promptInput.trim();
     setPromptInput('');
@@ -416,25 +584,17 @@ export default function App() {
       text: queryText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setMessages(prev => [...prev, formattedUserMsg]);
+    
+    const updatedMessages = [...messages, formattedUserMsg];
+    setMessages(updatedMessages);
 
-    // Check keyword matching and route layout updates
-    const lowerText = queryText.toLowerCase();
-    if (lowerText.includes('expense') || lowerText.includes('ledger') || lowerText.includes('money') || lowerText.includes('invoice') || lowerText.includes('bill') || lowerText.includes('budget') || lowerText.includes('tax')) {
-      startSimulation('expenses', queryText);
-    } else if (lowerText.includes('todo') || lowerText.includes('task') || lowerText.includes('note') || lowerText.includes('list') || lowerText.includes('plan') || lowerText.includes('job')) {
-      startSimulation('todo', queryText);
-    } else if (lowerText.includes('saas') || lowerText.includes('server') || lowerText.includes('telemetry') || lowerText.includes('cloud') || lowerText.includes('dashboard') || lowerText.includes('chart') || lowerText.includes('analytics')) {
-      startSimulation('saas', queryText);
-    } else {
-      // Just simulate a generic update into current layout
-      startSimulation(activeScreen, queryText);
-    }
+    // Run real-time structured prompt compilation via Gemini proxy
+    handlePromptExecution(queryText, updatedMessages);
   };
 
   // Submits the welcome prompt and switches to standard chat space
   const handleLandingSubmitWithPrompt = (promptText: string) => {
-    if (!promptText.trim()) return;
+    if (!promptText.trim() || isGenerating) return;
 
     const queryText = promptText.trim();
     setLandingPrompt('');
@@ -451,19 +611,12 @@ export default function App() {
       text: queryText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
-    setMessages(prev => [...prev, formattedUserMsg]);
+    
+    const updatedMessages = [...messages, formattedUserMsg];
+    setMessages(updatedMessages);
 
-    // Check keyword matching and route layout updates
-    const lowerText = queryText.toLowerCase();
-    if (lowerText.includes('expense') || lowerText.includes('ledger') || lowerText.includes('money') || lowerText.includes('invoice') || lowerText.includes('bill') || lowerText.includes('budget') || lowerText.includes('tax')) {
-      startSimulation('expenses', queryText);
-    } else if (lowerText.includes('todo') || lowerText.includes('task') || lowerText.includes('note') || lowerText.includes('list') || lowerText.includes('plan') || lowerText.includes('job')) {
-      startSimulation('todo', queryText);
-    } else if (lowerText.includes('saas') || lowerText.includes('server') || lowerText.includes('telemetry') || lowerText.includes('cloud') || lowerText.includes('dashboard') || lowerText.includes('chart') || lowerText.includes('analytics')) {
-      startSimulation('saas', queryText);
-    } else {
-      startSimulation(activeScreen, queryText);
-    }
+    // Run real-time structured prompt compilation via Gemini proxy
+    handlePromptExecution(queryText, updatedMessages);
   };
 
   // Welcome screen prompt submit button hook wrapper
@@ -1927,12 +2080,52 @@ export default function App() {
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 chat-scroll">
                   {messages.map(msg => (
-                    <div key={msg.id}>
+                    <motion.div 
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                      className="w-full"
+                    >
                       {msg.sender === 'user' ? (
-                        /* User Message alignment */
+                        /* User Message alignment with edit option built-in */
                         <div className="flex flex-col items-end gap-2 text-right">
-                          <div className="max-w-[85%] bg-primary select-text text-white p-4 rounded-2xl rounded-tr-none shadow-sm text-left">
-                            <p className="text-body-sm leading-relaxed text-slate-100">{msg.text}</p>
+                          <div className="max-w-[85%] bg-[#244b3c] select-text text-white p-4 rounded-2xl rounded-tr-none shadow-lg text-left relative group">
+                            {editingMessageId === msg.id ? (
+                              <div className="flex flex-col gap-2.5 w-72 md:w-80">
+                                <textarea
+                                  value={editingText}
+                                  onChange={(e) => setEditingText(e.target.value)}
+                                  className="w-full text-xs p-2 bg-stone-900 border border-emerald-500 rounded-lg text-emerald-100 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                  rows={3}
+                                />
+                                <div className="flex justify-end gap-2 text-[10px]">
+                                  <button
+                                    onClick={() => setEditingMessageId(null)}
+                                    className="px-2.5 py-1 bg-stone-800 hover:bg-stone-750 text-stone-300 rounded cursor-pointer transition font-bold"
+                                  >
+                                    Cancel
+                                  </button>
+                                  <button
+                                    onClick={() => handleSaveEditMessage(msg.id)}
+                                    className="px-2.5 py-1 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-extrabold rounded cursor-pointer transition"
+                                  >
+                                    Save & Regenerate
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <p className="text-body-sm leading-relaxed text-slate-100 pr-5 select-text">{msg.text}</p>
+                                <button
+                                  onClick={() => handleStartEditMessage(msg.id, msg.text)}
+                                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-emerald-200 hover:text-white transition cursor-pointer"
+                                  title="Edit Prompt"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                              </>
+                            )}
                           </div>
                           <span className="text-[10px] text-outline px-1">{msg.time}</span>
                         </div>
@@ -2030,50 +2223,116 @@ export default function App() {
                         </div>
                       ) : (
                         /* AI Assistant Dialog align mapping */
-                        <div className="flex flex-col items-start gap-2">
-                          <div className="flex items-center gap-2 mb-1 select-none">
-                            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white">
-                              <span className="material-symbols-outlined text-[14px]">auto_awesome</span>
+                        <div className="flex flex-col items-start gap-3 w-full">
+                          <div className="flex items-center justify-between w-full select-none">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded bg-[#244b3c] flex items-center justify-center text-white shadow-emerald-500/10 shadow-sm border border-emerald-500/20">
+                                <span className="material-symbols-outlined text-[13px] text-white">auto_awesome</span>
+                              </div>
+                              <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-[#244b3c] dark:text-emerald-400">BuildCraft Architect</span>
                             </div>
-                            <span className="font-label-code text-[11px] font-bold text-primary">BUILD CRAFT AI</span>
+                            
+                            {/* Action Row: Copy response */}
+                            <div className="flex items-center gap-2 opacity-50 hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(msg.text);
+                                  showToast('Response text copied to clipboard!', 'success');
+                                }}
+                                className="p-1 hover:bg-stone-200 dark:hover:bg-zinc-800 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white transition cursor-pointer flex items-center gap-1 text-[10px] font-semibold border-none"
+                                title="Copy Response"
+                              >
+                                <Copy className="w-3 h-3 text-current" />
+                                <span>Copy</span>
+                              </button>
+                            </div>
                           </div>
-                          <div className="max-w-[90%] glass-panel select-text p-4 rounded-2xl rounded-tl-none space-y-3 text-left">
-                            <p className="text-body-sm leading-relaxed text-on-surface-variant font-medium">{msg.text}</p>
+                          
+                          <div className="max-w-[95%] w-full bg-white dark:bg-zinc-900 border border-[#2d3a34]/15 dark:border-zinc-800 shadow-sm select-text p-5 rounded-2xl rounded-tl-none space-y-4 text-left">
+                            {/* Standard Rich Markdown Rendering */}
+                            <div className="markdown-body text-body-sm text-[#1e3d30] dark:text-zinc-200 select-text">
+                              <Markdown>{msg.text}</Markdown>
+                            </div>
                             
                             {/* Checklist mapping if exists */}
                             {msg.checklist && msg.checklist.length > 0 && (
-                              <ul className="space-y-2 text-body-sm mt-2 select-none">
-                                {msg.checklist.map((item, idx) => (
-                                  <li key={idx} className="flex items-center gap-2 text-on-surface-variant">
-                                    <span className="material-symbols-outlined text-[16px] text-primary">check_circle</span>
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                              <div className="border-t border-slate-100 dark:border-zinc-800/60 pt-3 mt-3">
+                                <h4 className="text-[10px] font-black uppercase text-slate-400 dark:text-zinc-500 tracking-wider mb-2 select-none">Implementation Checklist</h4>
+                                <ul className="space-y-2 text-body-sm select-none">
+                                  {msg.checklist.map((item, idx) => (
+                                    <li key={idx} className="flex items-start gap-2 text-slate-600 dark:text-zinc-400">
+                                      <span className="material-symbols-outlined text-[15px] text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">check_circle</span>
+                                      <span className="font-medium text-xs leading-tight">{item}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
                             )}
 
                             {/* Download Attachment trigger if exists */}
                             {msg.fileAttachment && (
                               <div 
                                 onClick={() => {
-                                  setAlertText(`Downloading source file "${msg.fileAttachment?.name}" completed successfully! Code exported to system download folder.`);
+                                  showToast(`Downloading file "${msg.fileAttachment?.name}" completed successfully!`, 'success');
+                                  setAlertText(`Exported source file "${msg.fileAttachment?.name}" code templates to local download queue.`);
                                   setIsAlertOpen(true);
                                 }}
-                                className="p-3 bg-surface-container-high rounded-xl border border-outline-variant flex items-center justify-between group cursor-pointer hover:border-primary transition-all select-none"
+                                className="p-3 bg-stone-50 dark:bg-zinc-800/40 hover:bg-emerald-50/45 dark:hover:bg-zinc-800/45 rounded-xl border border-black/5 dark:border-zinc-800 flex items-center justify-between group cursor-pointer hover:border-emerald-600 transition-all select-none"
                               >
                                 <div className="flex items-center gap-3">
-                                  <span className="material-symbols-outlined text-primary">analytics</span>
-                                  <span className="text-[12px] font-semibold text-on-surface-variant leading-none">{msg.fileAttachment.name}</span>
+                                  <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400">analytics</span>
+                                  <span className="text-[11.5px] font-bold text-slate-700 dark:text-zinc-300 leading-none">{msg.fileAttachment.name} ({msg.fileAttachment.size})</span>
                                 </div>
-                                <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors">download</span>
+                                <span className="material-symbols-outlined text-outline group-hover:text-emerald-600 transition-colors">download</span>
                               </div>
                             )}
                           </div>
+                          
+                          {/* Render custom Regenerate Response option but ONLY for the last AI reply! */}
+                          {messages[messages.length - 1].id === msg.id && (
+                            <div className="pl-1 select-none">
+                              <button
+                                onClick={handleRegenerateResponse}
+                                className="flex items-center gap-1.5 text-[10px] uppercase font-black tracking-wider text-slate-450 hover:text-slate-800 dark:hover:text-white transition cursor-pointer border-none"
+                                title="Regenerate Last Prompt Response"
+                              >
+                                <RotateCcw className="w-3 h-3" />
+                                <span>Regenerate Response</span>
+                              </button>
+                            </div>
+                          )}
+                          
                           <span className="text-[10px] text-outline px-1">{msg.time}</span>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))}
+                  
+                  {isGenerating && (
+                    <div className="flex flex-col items-start gap-3 w-full animate-pulse select-none">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded bg-[#244b3c] flex items-center justify-center text-white border border-emerald-500/20">
+                          <span className="material-symbols-outlined text-[13px] text-emerald-400">auto_awesome</span>
+                        </div>
+                        <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-[#244b3c] dark:text-emerald-400">Architect is designing...</span>
+                      </div>
+                      
+                      <div className="max-w-[90%] w-full bg-stone-50 dark:bg-zinc-900 border border-dotted border-[#2d3a34]/15 dark:border-zinc-805 p-5 rounded-2xl rounded-tl-none space-y-3.5">
+                        <div className="h-3 bg-stone-250 dark:bg-zinc-750 rounded w-1/3" />
+                        <div className="space-y-2">
+                          <div className="h-3.5 bg-stone-200 dark:bg-zinc-800 rounded w-full" />
+                          <div className="h-3.5 bg-stone-200 dark:bg-zinc-800 rounded w-11/12" />
+                          <div className="h-3.5 bg-stone-200 dark:bg-zinc-800 rounded w-2/3" />
+                        </div>
+                        <div className="pt-2 flex gap-1.5 opacity-65">
+                          <div className="h-6 bg-stone-300 dark:bg-zinc-700 rounded-full w-20" />
+                          <div className="h-6 bg-stone-300 dark:bg-zinc-700 rounded-full w-24" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {/* Anchor scroll point */}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Prompt Chat inputs */}
@@ -2185,18 +2444,29 @@ export default function App() {
                             <Mic className="w-3.5 h-3.5 text-zinc-350" />
                           </button>
 
-                          <button 
-                            type="submit"
-                            disabled={!promptInput.trim()}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center transition shrink-0 border-none ${
-                              promptInput.trim() 
-                                ? 'bg-[#282830] text-white hover:bg-zinc-700 shadow-sm' 
-                                : 'bg-[#1a1a20] text-zinc-600 cursor-not-allowed'
-                            }`}
-                            title="Submit prompt request"
-                          >
-                            <ArrowUp className="w-4 h-4 stroke-[2.5]" />
-                          </button>
+                          {isGenerating ? (
+                            <button 
+                              type="button"
+                              onClick={handleStopGeneration}
+                              className="w-8 h-8 rounded-full flex items-center justify-center transition shrink-0 border-none bg-rose-600 hover:bg-rose-500 text-white shadow-md cursor-pointer"
+                              title="Stop Generation"
+                            >
+                              <Square className="w-3.5 h-3.5 fill-current" />
+                            </button>
+                          ) : (
+                            <button 
+                              type="submit"
+                              disabled={!promptInput.trim()}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition shrink-0 border-none ${
+                                promptInput.trim() 
+                                  ? 'bg-[#282830] text-white hover:bg-zinc-700 shadow-sm' 
+                                  : 'bg-[#1a1a20] text-zinc-600 cursor-not-allowed'
+                              }`}
+                              title="Submit prompt request"
+                            >
+                              <ArrowUp className="w-4 h-4 stroke-[2.5]" />
+                            </button>
+                          )}
                         </div>
                       </motion.form>
                     )}
@@ -2646,10 +2916,17 @@ export default function App() {
       {/* Onboarding Welcome Screen Guide overlay */}
       <AnimatePresence>
         {showWelcome && (
-          <div 
+          <motion.div 
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
+            initial={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ 
+              opacity: 0, 
+              y: -50, 
+              scale: 0.98,
+              transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } 
+            }}
             className={`fixed inset-0 z-[200] flex flex-col overflow-y-auto select-none font-sans transition-colors duration-1000 ${activeTheme.bg} ${activeTheme.textMain}`}
           >
             
@@ -3044,9 +3321,35 @@ export default function App() {
               }}
             />
 
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Dynamic Animated Status Toast Alerts */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm pointer-events-none select-none">
+        <AnimatePresence>
+          {toasts.map(toast => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: 20, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, x: 40, transition: { duration: 0.25 } }}
+              className={`p-4 rounded-xl shadow-xl border flex items-center gap-3 pointer-events-auto ${
+                toast.type === 'success'
+                  ? 'bg-[#e8f5e9] dark:bg-[#111c15] border-emerald-500/20 text-[#1b5e20] dark:text-emerald-400'
+                  : toast.type === 'error'
+                  ? 'bg-[#ffebee] dark:bg-[#201012] border-rose-500/25 text-[#b71c1c] dark:text-rose-400'
+                  : 'bg-[#f5f5f5] dark:bg-[#18181b] border-stone-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-300'
+              }`}
+            >
+              <span className="material-symbols-outlined shrink-0 text-[18px]">
+                {toast.type === 'success' ? 'check_circle' : toast.type === 'error' ? 'info' : 'notifications'}
+              </span>
+              <p className="text-xs font-bold leading-normal">{toast.message}</p>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
     </div>
   );
